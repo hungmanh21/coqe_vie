@@ -3,6 +3,8 @@ import copy
 import torch
 import numpy as np
 
+from sklearn.metrics import precision_score, recall_score, f1_score
+
 from data_utils import shared_utils
 
 
@@ -737,10 +739,16 @@ class ElementEvaluation(BaseEvaluation):
 
         # add sentence identify accuracy
         if self.gold_sent_label is not None:
-            #TODO: them precision recall f1
-            with open("sent_classification.txt", 'w', encoding='utf-8'):
+            # TODO: them precision recall f1
+            with open("sent_classification.txt", 'w', encoding='utf-8') as file:
                 gold_label = self.gold_sent_label
-                predict_label = self.pre
+                predict_label = self.predict_sent_label
+                precision = precision_score(gold_label, predict_label)
+                recall = recall_score(gold_label, predict_label)
+                f1 = f1_score(gold_label, predict_label)
+                file.write("Precision: {}\n".format(precision))
+                file.write("Recall: {}\n".format(recall))
+                file.write("F1-score: {}\n".format(f1))
 
             exact_measure = self.measure_add_accuracy(
                 exact_measure, self.predict_sent_label, self.predict_dict
@@ -1091,6 +1099,18 @@ class PairEvaluation(BaseEvaluation):
         exact_correct_num, prop_correct_num = {"init_pair": 0.0, "pair": 0.0}, {"init_pair": 0.0, "pair": 0.0}
         binary_correct_num = {"init_pair": 0.0, "pair": 0.0}
 
+        # filter all candidates dont have predicate
+        filtered_cadidate_pair_col = []
+        for i in range(len(self.candidate_pair_col)):
+            cur_candidate_col = []
+            for pair in self.candidate_pair_col[i]:
+                if pair[3] == (-1, -1):
+                    cur_candidate_col.append([(-1, -1), (-1, -1), (-1, -1), (-1, -1)])
+                else:
+                    cur_candidate_col.append(pair)
+            filtered_cadidate_pair_col.append(cur_candidate_col)
+        self.candidate_pair_col = filtered_cadidate_pair_col
+
         predict_tuple_pair_col = self.get_predict_truth_tuple_pair(self.candidate_pair_col)
 
         # if polarity:
@@ -1122,6 +1142,7 @@ class PairEvaluation(BaseEvaluation):
                 gold_sequence_pair_col, predict_sequence_pair_col, polarity=polarity
             )
 
+            # candidate col là tích đề các chưa qua lọc
             cur_fake_exact_num, cur_fake_prop_num, cur_fake_binary_num = self.get_pair_num(
                 gold_sequence_pair_col, self.candidate_pair_col[index], polarity=False
             )
@@ -1234,6 +1255,11 @@ class PairEvaluation(BaseEvaluation):
         :param candidate_tuple_pair_col:
         :return:
         """
+
+        print("---------CANDIDATE COL------------")
+        print(candidate_tuple_pair_col)
+        print("---------END CANDIDATE COL------------")
+
         truth_tuple_pair_col = []
 
         # with polarity and is_pair.

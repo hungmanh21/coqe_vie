@@ -52,10 +52,8 @@ class PathConfig(object):
             self.stanford_path = r"D:/stanford-corenlp-full-2018-10-05"
             self.bert_model_path = "vinai/phobert-base" if file_type == "Smartphone-COQE" else r"bert-base-uncased"
         else:
-            self.stanford_path = premodel_path + "stanford-corenlp-full-2018-02-27"
-            self.bert_model_path = premodel_path + "base_uncased/" if file_type == "Camera-COQE" else premodel_path + "base_chinese/"
-            self.GloVe_path = premodel_path + "vector/glove.840B.300d.txt"
-            self.Word2Vec_path = premodel_path + "vector/word2vec.txt"
+            self.stanford_path = r"D:/stanford-corenlp-full-2018-10-05"
+            self.bert_model_path = "vinai/phobert-base" if file_type == "Smartphone-COQE" else r"bert-base-uncased"
 
         self.pre_process_data = {
             "train": "../data/pre_process/{}_train_data.txt".format(file_type),

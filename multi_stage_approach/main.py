@@ -51,7 +51,7 @@ def TerminalParser():
     parser.add_argument('--position_sys', help='BIES or BI or SPAN', default='BMES')
 
     parser.add_argument('--device', help='run program in device type',
-                        default='cuda' if torch.cuda.is_available() else 'cpu')
+                        default='cpu' if torch.cuda.is_available() else 'cpu')
 
     parser.add_argument('--file_type', help='the type of data set', default='car')
     parser.add_argument('--premodel_path', help='the type of data set', default=None)
@@ -255,7 +255,7 @@ def main():
         test_pair_loader = data_loader_utils.get_loader([test_pair_representation], 1)
 
         train_test_utils.pair_stage_model_test(
-            predict_pair_model, config, test_pair_loader, test_pair_eval, data_gene.test_data_dict['bert_token'],
+            predict_pair_model, config, test_pair_loader, test_pair_eval,
             test_pair_parameters, mode="pair", polarity=False, initialize=(False, False)
         )
 
@@ -271,7 +271,7 @@ def main():
         test_polarity_loader = data_loader_utils.get_loader([test_polarity_representation], 1)
 
         train_test_utils.pair_stage_model_test(
-            predict_polarity_model, config, test_polarity_loader, test_pair_eval, data_gene.test_data_dict['bert_token'],
+            predict_polarity_model, config, test_polarity_loader, test_pair_eval,
             test_polarity_parameters, mode="polarity", polarity=True, initialize=(True, True)
         )
 
@@ -383,7 +383,7 @@ def main():
             print("[ERROR] pre-train model isn't exist")
             return
 
-        elem_model = torch.load(pre_train_model_path)
+        elem_model = torch.load(pre_train_model_path).to(config.device)
 
         train_first_process_data_path = "./ModelResult/" + model_name + "/train_first_data_" + str(feature_type) + ".txt"
         dev_first_process_data_path = "./ModelResult/" + model_name + "/dev_first_data_" + str(feature_type) + ".txt"

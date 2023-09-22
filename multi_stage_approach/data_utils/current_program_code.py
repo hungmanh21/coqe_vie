@@ -17,29 +17,25 @@ def read_file(file_path):
 
     sent_col = []
     sent_label_col = []
-    label_col = []
-
+    final_label_col = []
     for paragraph in paragraphs:
         lines = paragraph.strip().split('\n')
         sentence = lines[0].strip()
-        label = int(sentence[-1])
-        sentence = sentence.rsplit(' ', 1)[0]
-        dictionary = json.loads(lines[1])
+        label_col = []
+        if(len(lines) == 1):
+            label = 0
+            dict_empty = {"subject": [], "object": [], "aspect": [], "predicate": [], "label": []}
+            label_col.append(dict_empty)
+        else:
+            label = 1
+            for i in range(len(lines)):
+                if(i != 0):
+                    dictionary = json.loads(lines[i])
+                    label_col.append(dictionary)
 
         sent_col.append(sentence)
         sent_label_col.append(label)
-        label_col.append(dictionary)
-
-    final_label_col = []
-
-    for lab in label_col:
-        if list(lab.keys())[0] != 'subject':  # multi quintuple in a sentence
-            lab_par = []
-            for lab_child in lab.values():
-                lab_par.append(lab_child)
-            final_label_col.append(lab_par)
-        else:
-            final_label_col.append([lab])
+        final_label_col.append(label_col)
 
     return sent_col, sent_label_col, final_label_col
 
@@ -47,7 +43,7 @@ def extract_indices(label_quin):
     global_elem_col = {}
     each_tuple_pair = []
     for key, values in label_quin.items():
-        if key != 'preference':
+        if key != 'label':
             global_elem_col[key] = set()
             index_list = [value.split('&&')[0] for value in values if value]  # index for each element
             if len(label_quin['predicate']):  # check if sentence is a com sentence
@@ -60,11 +56,11 @@ def extract_indices(label_quin):
                         each_tuple_pair.append((-1, -1))
                 else:
                     cp = 2  # COM SUP DIF
-                    if label_quin['preference'][0] in ('COM+', 'SUP+'):
+                    if label_quin['label'] in ('COM+', 'SUP+'):
                         cp = 1
-                    elif label_quin['preference'][0] == 'EQL':
+                    elif label_quin['label'] == 'EQL':
                         cp = 0
-                    elif label_quin['preference'][0] in ('COM-', 'SUP-'):
+                    elif label_quin['label'] in ('COM-', 'SUP-'):
                         cp = -1
                     global_elem_col[key].add((int(index_list[0]) - 1, int(index_list[-1]), cp))
                     each_tuple_pair.append((int(index_list[0]) - 1, int(index_list[-1])))
@@ -194,13 +190,17 @@ def mapping_segmented_col(sent_col, label_col, tuple_pair_col):
         new_str = new_str.replace('on - screen', 'on-screen')
         new_str = new_str.replace('4,5 W', '4,5W')
         new_str = new_str.replace('5.000 mAh', '5.000mAh')
-
+        new_str = new_str.replace('gyro - EIS', 'gyro-EIS')
         # for file dev.txt
         new_str = new_str.replace('mô - đun', 'mô-đun')
         new_str = new_str.replace('Li - on', 'Li-on')
+        new_str = new_str.replace('372ppi trên Z Fold 2 .', '372ppi trên Z Fold 2.')
 
         # for file test.txt
         new_str = new_str.replace('1,5 mm', '1,5mm')
+        new_str = new_str.replace('3,5 mm', '3,5mm')
+        new_str = new_str.replace('Wi - Fi', 'Wi-Fi')
+        new_str = new_str.replace('video . . . đều', 'video. . .đều')
 
         # add this pattern since it cause error
         if re.search(r'[A-Z]\.', new_str):

@@ -77,7 +77,6 @@ def first_stage_model_test(model, config, test_loader, res_eval, eval_parameters
     with torch.no_grad():
         for index, data in tqdm(enumerate(test_loader)):
             input_ids, attn_mask, comparative_label, multi_label, result_label = data
-
             input_ids = torch.tensor(input_ids).long().to(config.device)
             attn_mask = torch.tensor(attn_mask).long().to(config.device)
 
@@ -87,8 +86,6 @@ def first_stage_model_test(model, config, test_loader, res_eval, eval_parameters
             # result_output: predicate
             # sent_output: 0 or 1
             bert_feature, elem_feature, elem_output, result_output, sent_output = model(input_ids, attn_mask)
-
-
 
             if test_type == "eval":
                 res_eval.add_data(elem_output, result_output, attn_mask)
@@ -140,7 +137,7 @@ def pair_stage_model_train(model, optimizer, train_loader, config, epoch):
 
 
 def pair_stage_model_test(
-        model, config, test_loader, res_eval, test_sentence=None, eval_parameters=None, mode="pair", polarity=False, initialize=(False, False)):
+        model, config, test_loader, res_eval, eval_parameters=None, test_sentence=None, mode="pair", polarity=False, initialize=(False, False)):
     """
     :param test_sentence: raw sentence in the data
     :param model: the model

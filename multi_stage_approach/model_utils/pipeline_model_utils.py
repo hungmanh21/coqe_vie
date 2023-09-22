@@ -221,6 +221,7 @@ class LogisticClassifier(nn.Module):
         # weight = torch.tensor([1, 1, 1, 1]).float().to(self.config.device)
         # calculate loss.
         if pair_label is not None:
+            pair_label = pair_label[valid_indices]
             if self.weight is not None:
                 self.weight = self.weight.to(self.config.device)
                 criterion = nn.CrossEntropyLoss(weight=self.weight)
