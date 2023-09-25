@@ -1,6 +1,7 @@
 /multi_stage_approach/PreTrainModel/
 /multi_stage_approach/ModelResult/
 .idea/
+<<<<<<< HEAD
 /multi_stage_approach/output_for_ner_join.txt
  multi_stage_approach/__pycache__/
 multi_stage_approach/data_utils/__pycache__/
