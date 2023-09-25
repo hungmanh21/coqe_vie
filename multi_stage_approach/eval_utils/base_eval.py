@@ -1,5 +1,7 @@
 import csv
 import copy
+import json
+
 import torch
 import numpy as np
 
@@ -190,6 +192,11 @@ class BaseEvaluation(object):
         :param predict_elem_dict:
         :return:
         """
+        # print("-------CHECK GOLD END PRED DICT-------")
+        # print("gold : ", gold_elem_dict)
+        # print("pred : ", predict_elem_dict)
+        # print("-------END CHECK GOLD END PRED DICT-------")
+
         exact_num = self.get_exact_num(gold_elem_dict, predict_elem_dict)
         prop_num = self.get_cover_num(gold_elem_dict, predict_elem_dict, "prop")
         binary_num = self.get_cover_num(gold_elem_dict, predict_elem_dict, "binary")
@@ -219,6 +226,7 @@ class BaseEvaluation(object):
                     vis.add(gi)
 
                     # calculate result element with polarity
+                    # chỉ dùng cho stage 2+3 khi mà predicate có thêm polarity
                     if len(predict_col[pi]) == 3 and predict_col[pi] == gold_col[gi]:
                         result_polarity_correct_num += 1
                         polarity_correct_num_col[predict_col[pi][2] + 1] += 1
@@ -651,12 +659,14 @@ class BaseEvaluation(object):
 
 class ElementEvaluation(BaseEvaluation):
     def __init__(self, config, target=None, attn_mask=None, elem_col=None, ids_to_tags=None, fold=0,
-                 save_model=False, comparative_identity=False, gold_sent_label=None):
+                 save_model=False, comparative_identity=False, gold_sent_label=None, test_sentence=None):
         super(ElementEvaluation, self).__init__(
             config, elem_col=elem_col, ids_to_tags=ids_to_tags, fold=fold, save_model=save_model
         )
         self.comparative_identity = comparative_identity
         self.gold_sent_label = gold_sent_label
+
+        self.test_sentence = test_sentence
 
         if attn_mask is not None and target is not None:
             elem_label_ids, result_label_ids = target
@@ -692,6 +702,10 @@ class ElementEvaluation(BaseEvaluation):
         self.predict_dict = self.get_elem_dict((self.elem_hat, self.result_hat))
 
         # eval part do not drop elem.
+        """
+        những câu mà model predict ko phải câu so sánh thì các phần tử trong predict sẽ được gán lại là rỗng
+        self.comparative_identity sẽ chỉ True khi mà config.model_type là multitask hoặc là classification
+        """
         if self.comparative_identity:
             self.predict_dict = self.mask_non_comparative(self.predict_dict, self.predict_sent_label)
 
@@ -701,10 +715,23 @@ class ElementEvaluation(BaseEvaluation):
         gold_num = self.init_elem(key_col)
         predict_num = self.init_elem(key_col)
 
+        """
+        khởi tạo một dict có dạng {elem : 0.0} với exact match, prop và binary
+        """
         exact_correct_num, prop_correct_num, binary_correct_num = \
             self.init_elem(key_col), self.init_elem(key_col), self.init_elem(key_col)
 
         assert len(self.predict_dict) == len(self.gold_dict)
+
+        with open("output_for_ner_join.txt", 'a', encoding='utf-8') as file:
+            for i in range(len(self.gold_dict)):
+                file.write(str(self.test_sentence[i]))
+                file.write("\n")
+                file.write(json.dumps(self.predict_dict[i]))
+                file.write("\n")
+                file.write(json.dumps(self.gold_dict[i]))
+                file.write("\n")
+                file.write("\n")
 
         # calculate elem dict.
         for index in range(len(self.gold_dict)):
@@ -733,6 +760,8 @@ class ElementEvaluation(BaseEvaluation):
 
         # print(gold_num)
         # calculate f-score.
+        # exact_measure, prop_measure và binary_measure là một dict có dạng
+        # {"P": precision, "R": recall, "F": f_score, "macro" : macro, "micro" : micro}
         exact_measure = self.get_f_score(gold_num, predict_num, exact_correct_num, multi_elem_score)
         prop_measure = self.get_f_score(gold_num, predict_num, prop_correct_num, multi_elem_score)
         binary_measure = self.get_f_score(gold_num, predict_num, binary_correct_num, multi_elem_score)
@@ -750,6 +779,7 @@ class ElementEvaluation(BaseEvaluation):
                 file.write("Recall: {}\n".format(recall))
                 file.write("F1-score: {}\n".format(f1))
 
+            # thêm sent_accuracy vào các measure
             exact_measure = self.measure_add_accuracy(
                 exact_measure, self.predict_sent_label, self.predict_dict
             )
@@ -1099,18 +1129,6 @@ class PairEvaluation(BaseEvaluation):
         exact_correct_num, prop_correct_num = {"init_pair": 0.0, "pair": 0.0}, {"init_pair": 0.0, "pair": 0.0}
         binary_correct_num = {"init_pair": 0.0, "pair": 0.0}
 
-        # filter all candidates dont have predicate
-        filtered_cadidate_pair_col = []
-        for i in range(len(self.candidate_pair_col)):
-            cur_candidate_col = []
-            for pair in self.candidate_pair_col[i]:
-                if pair[3] == (-1, -1):
-                    cur_candidate_col.append([(-1, -1), (-1, -1), (-1, -1), (-1, -1)])
-                else:
-                    cur_candidate_col.append(pair)
-            filtered_cadidate_pair_col.append(cur_candidate_col)
-        self.candidate_pair_col = filtered_cadidate_pair_col
-
         predict_tuple_pair_col = self.get_predict_truth_tuple_pair(self.candidate_pair_col)
 
         # if polarity:
@@ -1169,6 +1187,7 @@ class PairEvaluation(BaseEvaluation):
 
 
         # calculate f-score.
+        # "P": precision, "R": recall, "F": f_score}
         exact_measure = self.get_f_score(gold_num, predict_num, exact_correct_num, multi_elem_score=False)
         prop_measure = self.get_f_score(gold_num, predict_num, prop_correct_num, multi_elem_score=False)
         binary_measure = self.get_f_score(gold_num, predict_num, binary_correct_num, multi_elem_score=False)
@@ -1210,7 +1229,7 @@ class PairEvaluation(BaseEvaluation):
         elem_length = len(tuple_pair_col[0]) if len(tuple_pair_col) != 0 else 5
         null_pair, pair_num = [(-1, -1)] * elem_length, 0
         for index in range(len(tuple_pair_col)):
-            if tuple_pair_col[index] == null_pair:
+            if tuple_pair_col[index] == null_pair or tuple_pair_col[index][3] == (-1, -1):
                 continue
             pair_num += 1
         return pair_num
@@ -1255,10 +1274,6 @@ class PairEvaluation(BaseEvaluation):
         :param candidate_tuple_pair_col:
         :return:
         """
-
-        print("---------CANDIDATE COL------------")
-        print(candidate_tuple_pair_col)
-        print("---------END CANDIDATE COL------------")
 
         truth_tuple_pair_col = []
 

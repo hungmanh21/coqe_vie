@@ -214,6 +214,8 @@ class LogisticClassifier(nn.Module):
             valid_indices = ~torch.isnan(pair_representation)
             valid_indices = torch.nonzero(valid_indices.all(dim=1)).squeeze().cpu().numpy()
             pair_representation = pair_representation[valid_indices]
+        elif self.feature_dim == 773:
+            pair_representation = pair_representation[:, :, :, 2319:3092]
 
         predict_label = self.fc(pair_representation.view(-1, self.feature_dim))
         predict_label = self.dropout(predict_label)

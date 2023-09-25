@@ -216,7 +216,7 @@ def first_stage_model_main(
                       "./PreTrainModel/" + model_name + "/dev_model"]
 
     # train and test model.
-    for epoch in range(config.epochs):
+    for epoch in range(40):
         first_stage_model_train(model, optimizer, train_loader, config, epoch)
         first_stage_model_test(model, config, dev_loader, dev_comp_eval, dev_parameters)
 

@@ -791,7 +791,9 @@ def create_polarity_train_data(config, tuple_pair_col, feature_out, bert_feature
     for index in range(len(tuple_pair_col)):
         for pair_index in range(len(tuple_pair_col[index])):
             each_pair_representation = []
-            for elem_index in range(4):
+            using_predicate = False
+            if using_predicate:
+                elem_index = 3
                 s, e = tuple_pair_col[index][pair_index][elem_index]
                 if s == -1:
                     # 采用5维 + 768维
@@ -828,6 +830,46 @@ def create_polarity_train_data(config, tuple_pair_col, feature_out, bert_feature
                         each_pair_representation.append(
                             torch.mean(bert_feature_out[index][s: e], dim=0).cpu().view(-1, encode_hidden_size)
                         )
+            else:
+                for elem_index in range(4):
+                    s, e = tuple_pair_col[index][pair_index][elem_index]
+                    if s == -1:
+                        # 采用5维 + 768维
+                        if feature_type == 0:
+                            each_pair_representation.append(torch.zeros(1, hidden_size).cpu())
+                            each_pair_representation.append(torch.zeros(1, encode_hidden_size).cpu())
+
+                        # 采用 5维
+                        elif feature_type == 1:
+                            each_pair_representation.append(torch.zeros(1, hidden_size).cpu())
+
+                        # 采用 768维
+                        elif feature_type == 2:
+                            each_pair_representation.append(torch.zeros(1, encode_hidden_size).cpu())
+
+                    else:
+                        # 采用5维 + 768维
+                        if feature_type == 0:
+                            each_pair_representation.append(
+                                torch.mean(feature_out[index][elem_index][s: e], dim=0).cpu().view(-1, hidden_size)
+                            )
+                            each_pair_representation.append(
+                                torch.mean(bert_feature_out[index][s: e], dim=0).cpu().view(-1, encode_hidden_size)
+                            )
+
+                        # 采用 5维
+                        elif feature_type == 1:
+                            each_pair_representation.append(
+                                torch.mean(feature_out[index][elem_index][s: e], dim=0).cpu().view(-1, hidden_size)
+                            )
+
+                        # 采用 768维
+                        elif feature_type == 2:
+                            each_pair_representation.append(
+                                torch.mean(bert_feature_out[index][s: e], dim=0).cpu().view(-1, encode_hidden_size)
+                            )
+
+
 
             if torch.cuda.is_available():
                 cur_representation = torch.cat(each_pair_representation, dim=-1).view(-1).cpu().numpy().tolist()

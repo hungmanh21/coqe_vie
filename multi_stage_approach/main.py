@@ -51,7 +51,7 @@ def TerminalParser():
     parser.add_argument('--position_sys', help='BIES or BI or SPAN', default='BMES')
 
     parser.add_argument('--device', help='run program in device type',
-                        default='cpu' if torch.cuda.is_available() else 'cpu')
+                        default='cuda' if torch.cuda.is_available() else 'cpu')
 
     parser.add_argument('--file_type', help='the type of data set', default='car')
     parser.add_argument('--premodel_path', help='the type of data set', default=None)
@@ -165,7 +165,7 @@ def main():
                           "./PreTrainModel/" + model_name + "/dev_model"]
 
         print("==================test================")
-        predicate_model = torch.load(dev_parameters[1])
+        predicate_model = torch.load(dev_parameters[1]).to(config.device)
 
         test_parameters = ["./ModelResult/" + model_name + "/test_elem_result.txt", None]
 
@@ -174,7 +174,8 @@ def main():
             (data_gene.test_data_dict['multi_label'], data_gene.test_data_dict['result_label']),
             data_gene.test_data_dict['comparative_label'],
             data_gene.test_data_dict['attn_mask'],
-            save_model=False
+            save_model=False,
+            test_sentence = data_gene.test_data_dict['bert_token']
         )
 
         train_test_utils.first_stage_model_test(
