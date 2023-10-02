@@ -61,11 +61,14 @@ class DataGenerator(object):
 
             mapping_col = shared_utils.token_mapping_bert(data_dict['bert_token'], data_dict['standard_token'])
 
-            # print("-------------Check mapping col--------------")
-            # print(data_dict['standard_token'][0])
-            # print(data_dict['bert_token'][0])
-            # print(mapping_col[0])
-            # print("-------------End check mapping col--------------")
+            with open('output_mapping_col_videberta.txt', 'w', encoding='utf-8') as file:
+                file.write("-------------output_mapping_col_videberta--------------\n")
+
+                for i in range(len(data_dict['bert_token'])):
+                    file.write(f"{i}\n")
+                    file.write(f"{data_dict['standard_token'][i]}\n")
+                    file.write(f"{data_dict['bert_token'][i]}\n")
+                    file.write(f"{mapping_col[i]}\n")
 
             label_col = cpc.convert_eng_label_dict_by_mapping(label_col, mapping_col)
 

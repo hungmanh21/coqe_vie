@@ -1366,7 +1366,7 @@ Ngoài ra, Galaxy S23 Ultra thực sự có thời lượng pin tốt hơn so v�
 {"subject": ["4&&Galaxy", "5&&S23", "6&&Ultra"], "object": ["17&&S23", "18&&+"], "aspect": ["20&&công", "21&&nghệ", "22&&màn", "23&&hình", "24&&LTPO"], "predicate": ["25&&tiết", "26&&kiệm", "27&&hơn"], "label": "COM+"}
 {"subject": ["4&&Galaxy", "5&&S23", "6&&Ultra"], "object": ["17&&S23", "18&&+"], "aspect": ["29&&dải", "30&&tốc", "31&&độ", "32&&làm", "33&&mới", "34&&động"], "predicate": ["35&&rộng", "36&&hơn"], "label": "COM+"}
 
-Theo như công bố của Samsung thì thời lượng pin của S23 Ultra đã tăng 20% ​​so với thế hệ tiền nhiệm.
+Theo như công bố của Samsung thì thời lượng pin của S23 Ultra đã tăng 20% so với thế hệ tiền nhiệm.
 {"subject": ["12&&S23", "13&&Ultra"], "object": ["21&&hệ", "22&&tiền", "23&&nhiệm"], "aspect": ["8&&thời", "9&&lượng", "10&&pin"], "predicate": ["15&&tăng", "16&&20%"], "label": "COM+"}
 
 Tạm kết
@@ -7235,7 +7235,7 @@ alt: Samsung Galaxy M31 Prime (ảnh 1)
 
 des: Samsung Galaxy M31 Prime (ảnh 1)
 
-Samsung Galaxy M31 Prime có giá 223 USD ở Ấn Độ, Realme 6 Pro có giá 270 USD và Motorola One Fusion+ có giá khoảng ​​237 USD.
+Samsung Galaxy M31 Prime có giá 223 USD ở Ấn Độ, Realme 6 Pro có giá 270 USD và Motorola One Fusion+ có giá khoảng 237 USD.
 
 Nếu không màn hình quá chất lượng thì bạn nên chọn Realme 6 Pro.
 
