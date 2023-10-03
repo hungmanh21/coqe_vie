@@ -85,11 +85,11 @@ def first_stage_model_test(model, config, test_loader, res_eval, eval_parameters
             # elem_output: e1, e2 và aspect
             # result_output: predicate
             # sent_output: 0 or 1
-            bert_feature, elem_feature, elem_output, result_output = model(input_ids, attn_mask)
+            bert_feature, elem_feature, elem_output, result_output, sent_output = model(input_ids, attn_mask)
 
             if test_type == "eval":
                 res_eval.add_data(elem_output, result_output, attn_mask)
-                # res_eval.add_sent_label(sent_output)
+                res_eval.add_sent_label(sent_output)
             else:
                 res_eval.add_data(elem_output, result_output, attn_mask)
                 elem_feature_embed.append(elem_feature)
