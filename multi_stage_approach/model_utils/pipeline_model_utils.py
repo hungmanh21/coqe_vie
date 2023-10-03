@@ -54,17 +54,17 @@ class Baseline(nn.Module):
         sequence_output : Sequence of hidden-states at the output of the last layer of the model.
         pooled_output : Last layer hidden-state of the first token of the sequence (classification token) after further processing
         """
-        token_embedding, pooled_output = self.encoder(input_ids, attn_mask)
+        token_embedding = self.encoder(input_ids, attn_mask)
 
         batch_size, sequence_length, _ = token_embedding.size()
 
         final_embedding = self.embedding_dropout(token_embedding)
-        class_embedding = self.embedding_dropout(pooled_output)
+        # class_embedding = self.embedding_dropout(pooled_output)
 
         # linear mapping.
         multi_sequence_prob = [self.W[index](final_embedding) for index in range(len(self.W))]
 
-        sent_class_prob = self.sent_linear(class_embedding)
+        # sent_class_prob = self.sent_linear(class_embedding)
 
         # decode sequence label.
         elem_output = []
@@ -79,7 +79,7 @@ class Baseline(nn.Module):
         result_output = self.decoder[3](multi_sequence_prob[3], attn_mask, result_label)
 
         if elem_label is None and result_label is None:
-            _, sent_output = torch.max(torch.softmax(sent_class_prob, dim=1), dim=1)
+            # _, sent_output = torch.max(torch.softmax(sent_class_prob, dim=1), dim=1)
 
             elem_output = torch.cat(elem_output, dim=0).view(3, batch_size, sequence_length).permute(1, 0, 2)
 
@@ -89,21 +89,14 @@ class Baseline(nn.Module):
 
             # elem_feature: [B, 3, N, feature_dim]
             # result_feature: [B, N, feature_dim]
-            return token_embedding, elem_feature, elem_output, result_output, sent_output
+            return token_embedding, elem_feature, elem_output, result_output
 
         # calculate sent loss and crf loss.
-        sent_loss = F.cross_entropy(sent_class_prob, comparative_label.view(-1))
+        # sent_loss = F.cross_entropy(sent_class_prob, comparative_label.view(-1))
         crf_loss = sum(elem_output) + result_output
 
         # according different model type to get different loss type.
-        if self.config.model_type == "classification":
-            return sent_loss
-
-        elif self.config.model_type == "extraction":
-            return crf_loss
-
-        else:
-            return sent_loss + self.gamma * crf_loss
+        return self.gamma * crf_loss
 
 
 class LSTMModel(nn.Module):

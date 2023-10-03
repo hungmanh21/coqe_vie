@@ -723,15 +723,15 @@ class ElementEvaluation(BaseEvaluation):
 
         assert len(self.predict_dict) == len(self.gold_dict)
 
-        with open("output_for_ner_join.txt", 'a', encoding='utf-8') as file:
-            for i in range(len(self.gold_dict)):
-                file.write(str(self.test_sentence[i]))
-                file.write("\n")
-                file.write(json.dumps(self.predict_dict[i]))
-                file.write("\n")
-                file.write(json.dumps(self.gold_dict[i]))
-                file.write("\n")
-                file.write("\n")
+        # with open("output_for_ner_join.txt", 'a', encoding='utf-8') as file:
+        #     for i in range(len(self.gold_dict)):
+        #         file.write(str(self.test_sentence[i]))
+        #         file.write("\n")
+        #         file.write(json.dumps(self.predict_dict[i]))
+        #         file.write("\n")
+        #         file.write(json.dumps(self.gold_dict[i]))
+        #         file.write("\n")
+        #         file.write("\n")
 
         # calculate elem dict.
         for index in range(len(self.gold_dict)):

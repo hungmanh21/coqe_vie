@@ -21,13 +21,13 @@ class BERTCell(nn.Module):
     def forward(self, input_ids, attn_mask):
         # encoded_layers shape: [layers, batch_size, tokens, hidden_size]
         # sequence_output, pooled_output, (hidden_states), (attentions)
-        sequence_output, pooled_output = self.bert(input_ids, attention_mask=attn_mask)[:2]
+        sequence_output = self.bert(input_ids, attention_mask=attn_mask)[0]
         """
         đưa vào model input_ids and attn_mask, model trả về một array tuple trong đó 2 phần tử đầu có ý nghĩa như ở dưới
         sequence_output : Sequence of hidden-states at the output of the last layer of the model.
         pooled_output : Last layer hidden-state of the first token of the sequence (classification token) after further processing
         """
-        return sequence_output, pooled_output
+        return sequence_output
 
 
 # bi-direction-LSTM Layer.
