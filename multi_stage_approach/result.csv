@@ -98,3 +98,8 @@ measure_type,entity_1,entity_2,aspect,result,macro,micro,sent_acc,elem_acc
 Exact,68.14,66.16,55.89,57.83,62.04,61.47,93.87,93.53
 Prop,75.81,75.44,66.42,74.67,73.13,72.94,93.87,93.53
 Binary,77.56,77.69,70.52,80.15,76.53,76.52,93.87,93.53
+Smartphone-COQE_bert_first_multitask_25_16_run/embe_1
+measure_type,entity_1,entity_2,aspect,result,macro,micro,sent_acc,elem_acc
+Exact,43.44,43.29,32.57,41.83,40.48,40.19,20.1,89.84
+Prop,55.64,53.34,44.4,60.28,53.68,53.99,20.1,89.84
+Binary,59.34,57.72,50.3,68.95,59.38,59.97,20.1,89.84

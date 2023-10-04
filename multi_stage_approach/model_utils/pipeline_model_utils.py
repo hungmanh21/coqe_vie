@@ -84,13 +84,13 @@ class Baseline(nn.Module):
             for i in range(len(attn_mask)):
                 non_padding_len = torch.count_nonzero(attn_mask[i])
                 null_result_output = torch.cat(
-                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cuda"),
-                     torch.tensor([-1] * (96 - non_padding_len)).to("cuda")))
+                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cpu"),
+                     torch.tensor([-1] * (96 - non_padding_len)).to("cpu")))
                 if torch.equal(result_output[i], null_result_output):
                     sent_output.append(0)
                 else:
                     sent_output.append(1)
-            sent_output = torch.tensor(sent_output).to("cuda")
+            sent_output = torch.tensor(sent_output).to("cpu")
 
             elem_output = torch.cat(elem_output, dim=0).view(3, batch_size, sequence_length).permute(1, 0, 2)
 
