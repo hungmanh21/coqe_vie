@@ -174,8 +174,7 @@ def main():
             (data_gene.test_data_dict['multi_label'], data_gene.test_data_dict['result_label']),
             data_gene.test_data_dict['comparative_label'],
             data_gene.test_data_dict['attn_mask'],
-            save_model=False,
-            test_sentence = data_gene.test_data_dict['bert_token']
+            save_model=False
         )
 
         train_test_utils.first_stage_model_test(
@@ -395,7 +394,8 @@ def main():
             train_pair_representation, train_make_pair_label, train_polarity_representation, train_polarity_label = \
                 shared_utils.read_pickle(train_first_process_data_path)
         else:
-            _, train_pair_representation, train_make_pair_label, train_feature_out, train_bert_feature_out = \
+            _, train_pair_representation, train_make_pair_label, \
+                train_feature_out, train_bert_feature_out = \
                 train_test_utils.first_stage_model_test(
                     elem_model, config, train_loader, generate_second_res_eval,
                     eval_parameters=[data_gene.train_data_dict['tuple_pair_col']],

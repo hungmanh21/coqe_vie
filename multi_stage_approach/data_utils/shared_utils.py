@@ -520,15 +520,16 @@ def token_mapping_bert(bert_token_col, gold_token_col):
     for index in range(len(bert_token_col)):
         seq_map, bert_index, token_index = {}, 0, 0
         seq_bert_token, seq_gold_token = bert_token_col[index], gold_token_col[index]
-        print(seq_bert_token)
-        print(seq_gold_token)
+
 
         seq_bert_token = remove_non_single_underscore(seq_bert_token)
-        print(seq_bert_token)
+
 
         while bert_index < len(seq_bert_token) and token_index < len(seq_gold_token):
             seq_map[token_index] = []
 
+            if (seq_bert_token[bert_index] == '[CLS]'):
+                bert_index += 1
             if(seq_bert_token[bert_index] == '▁'):
                 seq_map[token_index].append(bert_index)
                 bert_index += 1
@@ -538,35 +539,19 @@ def token_mapping_bert(bert_token_col, gold_token_col):
                 token_index = token_index + 1
             else:
                 string_bert_token = ""
-                for i in range (100):
-                    if seq_bert_token[bert_index + i] != '\u200b':
+                if(seq_gold_token[token_index] == "\u200b"):
+                    token_index += 1
+                else:
+                    for i in range (100):
                         string_bert_token = string_bert_token + seq_bert_token[bert_index + i]
-                    seq_map[token_index].append(bert_index + i)
-                    if(string_bert_token == seq_gold_token[token_index]):
-                        token_index = token_index + 1
-                        bert_index += (i + 1)
-                        break
-                # 'Wi', '-', 'F', 'i', '_Direct', '▁'
-                # if (seq_gold_token[token_index] == seq_bert_token[bert_index] + seq_bert_token[bert_index + 1]):
-                #     seq_map[token_index].append(bert_index)
-                #     seq_map[token_index].append(bert_index + 1)
-                #     bert_index += 2
-                #     token_index = token_index + 1
-                # elif (seq_gold_token[token_index] == seq_bert_token[bert_index] + seq_bert_token[bert_index + 1] + seq_bert_token[bert_index + 2]):
-                #     seq_map[token_index].append(bert_index)
-                #     seq_map[token_index].append(bert_index + 1)
-                #     seq_map[token_index].append(bert_index + 2)
-                #     bert_index += 3
-                #     token_index = token_index + 1
-                # elif (seq_gold_token[token_index] == seq_bert_token[bert_index] + seq_bert_token[bert_index + 1] +
-                #       seq_bert_token[bert_index + 2]+
-                #       seq_bert_token[bert_index + 3]):
-                #     seq_map[token_index].append(bert_index)
-                #     seq_map[token_index].append(bert_index + 1)
-                #     seq_map[token_index].append(bert_index + 2)
-                #     seq_map[token_index].append(bert_index + 3)
-                #     bert_index += 4
-                #     token_index = token_index + 1
+
+                        seq_map[token_index].append(bert_index + i)
+
+                        if(string_bert_token == seq_gold_token[token_index]):
+                            token_index = token_index + 1
+                            bert_index += (i + 1)
+                            break
+
 
         seq_map[token_index] = [bert_index]
         mapping_col.append(seq_map)
