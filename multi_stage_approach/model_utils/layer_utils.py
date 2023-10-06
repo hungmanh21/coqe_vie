@@ -54,7 +54,6 @@ class LSTMCell(nn.Module):
     def forward(self, x):
         self.hidden = self.init_hidden(x.size(0))
 
-        print(self.hidden[0].size(), self.hidden[1].size())
         # output: [batch, seq_length, num_directions * hidden_size]
         output, self.hidden = self.lstm(x, self.hidden)
 

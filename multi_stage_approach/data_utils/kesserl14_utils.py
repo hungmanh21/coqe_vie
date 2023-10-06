@@ -71,11 +71,11 @@ class DataGenerator(object):
             #         file.write(f"{mapping_col[i]}\n")
 
             label_col = cpc.convert_eng_label_dict_by_mapping(label_col, mapping_col)
-            for i in range(len(data_dict['comparative_label'])):
-                if data_dict['comparative_label'] == 1:
-                    print(data_dict['bert_token'][i])
-                    print(data_dict['label_col'][i])
-                    print(label_col[i])
+            # for i in range(len(data_dict['comparative_label'])):
+            #     if data_dict['comparative_label'] == 1:
+            #         print(data_dict['bert_token'][i])
+            #         print(data_dict['label_col'][i])
+            #         print(label_col[i])
 
             tuple_pair_col = cpc.convert_eng_tuple_pair_by_mapping(tuple_pair_col, mapping_col)
 

@@ -706,8 +706,8 @@ class ElementEvaluation(BaseEvaluation):
         những câu mà model predict ko phải câu so sánh thì các phần tử trong predict sẽ được gán lại là rỗng
         self.comparative_identity sẽ chỉ True khi mà config.model_type là multitask hoặc là classification
         """
-        if self.comparative_identity:
-            self.predict_dict = self.mask_non_comparative(self.predict_dict, self.predict_sent_label)
+        # if self.comparative_identity:
+        #     self.predict_dict = self.mask_non_comparative(self.predict_dict, self.predict_sent_label)
 
         # using exact, proportional and binary measure model.
         key_col = self.elem_col
@@ -723,7 +723,7 @@ class ElementEvaluation(BaseEvaluation):
 
         assert len(self.predict_dict) == len(self.gold_dict)
 
-        # with open("output_for_ner_join.txt", 'a', encoding='utf-8') as file:
+        # with open("output_for_ner_no_mask_comparative.txt", 'a', encoding='utf-8') as file:
         #     for i in range(len(self.gold_dict)):
         #         file.write(str(self.test_sentence[i]))
         #         file.write("\n")

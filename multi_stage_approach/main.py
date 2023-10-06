@@ -174,7 +174,8 @@ def main():
             (data_gene.test_data_dict['multi_label'], data_gene.test_data_dict['result_label']),
             data_gene.test_data_dict['comparative_label'],
             data_gene.test_data_dict['attn_mask'],
-            save_model=False
+            save_model=False,
+            test_sentence = data_gene.test_data_dict['bert_token']
         )
 
         train_test_utils.first_stage_model_test(

@@ -84,13 +84,13 @@ class Baseline(nn.Module):
             for i in range(len(attn_mask)):
                 non_padding_len = torch.count_nonzero(attn_mask[i])
                 null_result_output = torch.cat(
-                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cpu"),
-                     torch.tensor([-1] * (96 - non_padding_len)).to("cpu")))
+                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cuda"),
+                     torch.tensor([-1] * (96 - non_padding_len)).to("cuda")))
                 if torch.equal(result_output[i], null_result_output):
                     sent_output.append(0)
                 else:
                     sent_output.append(1)
-            sent_output = torch.tensor(sent_output).to("cpu")
+            sent_output = torch.tensor(sent_output).to("cuda")
 
             elem_output = torch.cat(elem_output, dim=0).view(3, batch_size, sequence_length).permute(1, 0, 2)
 
@@ -131,10 +131,10 @@ class LSTMModel(nn.Module):
         if "loss_factor" in model_parameters:
             self.gamma = model_parameters['loss_factor']
         else:
-            self.gamma = 0
+            self.gamma = 1
 
         # define sentence classification
-        self.sent_linear = nn.Linear(self.encoder.hidden_size * 2, 2)
+        # self.sent_linear = nn.Linear(self.encoder.hidden_size * 2, 2)
 
         # define mapping full-connect layer.
         self.W = nn.ModuleList()
@@ -155,11 +155,11 @@ class LSTMModel(nn.Module):
         batch_size, sequence_length, _ = token_embedding.size()
 
         final_embedding = self.embedding_dropout(token_embedding)
-        class_embedding = self.embedding_dropout(pooled_output)
+        # class_embedding = self.embedding_dropout(pooled_output)
 
         # linear mapping.
         multi_sequence_prob = [self.W[index](final_embedding) for index in range(len(self.W))]
-        sent_class_prob = self.sent_linear(class_embedding)
+        # sent_class_prob = self.sent_linear(class_embedding)
 
         # decode sequence label.
         elem_output = []
@@ -173,7 +173,18 @@ class LSTMModel(nn.Module):
         result_output = self.decoder[3](multi_sequence_prob[3], attn_mask, result_label)
 
         if elem_label is None and result_label is None:
-            _, sent_output = torch.max(torch.softmax(sent_class_prob, dim=1), dim=1)
+            # _, sent_output = torch.max(torch.softmax(sent_class_prob, dim=1), dim=1)
+            sent_output = []
+            for i in range(len(attn_mask)):
+                non_padding_len = torch.count_nonzero(attn_mask[i])
+                null_result_output = torch.cat(
+                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cuda"),
+                     torch.tensor([-1] * (96 - non_padding_len)).to("cuda")))
+                if torch.equal(result_output[i], null_result_output):
+                    sent_output.append(0)
+                else:
+                    sent_output.append(1)
+            sent_output = torch.tensor(sent_output).to("cuda")
 
             elem_output = torch.cat(elem_output, dim=0).view(3, batch_size, sequence_length).permute(1, 0, 2)
 
@@ -186,19 +197,10 @@ class LSTMModel(nn.Module):
             return token_embedding, elem_feature, elem_output, result_output, sent_output
 
         # calculate sent loss and crf loss.
-        sent_loss = F.cross_entropy(sent_class_prob, comparative_label.view(-1))
+        # sent_loss = F.cross_entropy(sent_class_prob, comparative_label.view(-1))
         crf_loss = sum(elem_output) + result_output
-
-        print(sent_loss, crf_loss)
-        # according different model type to get different loss type.
-        if self.config.model_type == "classification":
-            return sent_loss
-
-        elif self.config.model_type == "extraction":
-            return crf_loss
-
-        else:
-            return sent_loss + self.gamma * crf_loss
+        # print(elem_output, result_output)
+        return self.gamma * crf_loss
 
 
 class LogisticClassifier(nn.Module):
