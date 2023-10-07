@@ -475,86 +475,47 @@ def token_mapping_bert(bert_token_col, gold_token_col):
     assert len(bert_token_col) == len(gold_token_col), "bert data length not equal to char data length"
 
     mapping_col = []
-    # for index in range(len(bert_token_col)):
-    #     seq_map, bert_index, token_index = {}, 1, 0
-    #     seq_bert_token, seq_gold_token = bert_token_col[index], gold_token_col[index]
-    #
-    #     while bert_index < len(seq_bert_token) and token_index < len(seq_gold_token):
-    #         seq_map[token_index] = [bert_index]
-    #
-    #         # [UNK] denote special symbol
-    #         if seq_bert_token[bert_index] == "[UNK]":
-    #             bert_index = bert_index + 1
-    #             token_index = token_index + 1
-    #             continue
-    #
-    #         # get cur index correspond length
-    #         token_length = len(seq_gold_token[token_index])
-    #         bert_length = len(seq_bert_token[bert_index])
-    #
-    #         # drop "##" prefix
-    #         if seq_bert_token[bert_index].find("@@") != -1:
-    #             bert_length = len(seq_bert_token[bert_index]) - 2
-    #
-    #         while token_length > bert_length:
-    #             bert_index = bert_index + 1
-    #             seq_map[token_index].append(bert_index)
-    #             bert_length += len(seq_bert_token[bert_index])
-    #
-    #             if seq_bert_token[bert_index].find("@@") != -1:
-    #                 bert_length -= 2
-    #
-    #         # assert bert_length == token_length, "appear mapping error!"
-    #         # check_utils.check_mapping_process(seq_map, seq_gold_token, seq_bert_token)
-    #
-    #         token_index = token_index + 1
-    #         bert_index = bert_index + 1
-    #
-    #     # 为了处理 e_index 为最后一位的特殊情况
-    #     seq_map[token_index] = [bert_index]
-    #
-    #     # check_utils.check_mapping_process(seq_map, bert_token_col[index], gold_char_col[index])
-    #     mapping_col.append(seq_map)
-    #
-    # return mapping_col
     for index in range(len(bert_token_col)):
-        seq_map, bert_index, token_index = {}, 0, 0
+        seq_map, bert_index, token_index = {}, 1, 0
         seq_bert_token, seq_gold_token = bert_token_col[index], gold_token_col[index]
 
-
-        seq_bert_token = remove_non_single_underscore(seq_bert_token)
-
-
         while bert_index < len(seq_bert_token) and token_index < len(seq_gold_token):
-            seq_map[token_index] = []
+            seq_map[token_index] = [bert_index]
 
-            if (seq_bert_token[bert_index] == '[CLS]'):
-                bert_index += 1
-            if(seq_bert_token[bert_index] == '▁'):
-                seq_map[token_index].append(bert_index)
-                bert_index += 1
-            if(seq_gold_token[token_index] == seq_bert_token[bert_index]):
-                seq_map[token_index].append(bert_index)
-                bert_index += 1
+            # [UNK] denote special symbol
+            if seq_bert_token[bert_index] == "[UNK]":
+                bert_index = bert_index + 1
                 token_index = token_index + 1
-            else:
-                string_bert_token = ""
-                if(seq_gold_token[token_index] == "\u200b"):
-                    token_index += 1
-                else:
-                    for i in range (100):
-                        string_bert_token = string_bert_token + seq_bert_token[bert_index + i]
+                continue
 
-                        seq_map[token_index].append(bert_index + i)
+            # get cur index correspond length
+            token_length = len(seq_gold_token[token_index])
+            bert_length = len(seq_bert_token[bert_index])
 
-                        if(string_bert_token == seq_gold_token[token_index]):
-                            token_index = token_index + 1
-                            bert_index += (i + 1)
-                            break
+            # drop "##" prefix
+            if seq_bert_token[bert_index].find('▁') != -1:
+                bert_length = len(seq_bert_token[bert_index]) - 1
 
+            while token_length > bert_length:
+                bert_index = bert_index + 1
+                seq_map[token_index].append(bert_index)
+                bert_length += len(seq_bert_token[bert_index])
 
+                if seq_bert_token[bert_index].find('▁') != -1:
+                    bert_length -= 1
+
+            # assert bert_length == token_length, "appear mapping error!"
+            # check_utils.check_mapping_process(seq_map, seq_gold_token, seq_bert_token)
+
+            token_index = token_index + 1
+            bert_index = bert_index + 1
+
+        # 为了处理 e_index 为最后一位的特殊情况
         seq_map[token_index] = [bert_index]
+
+        # check_utils.check_mapping_process(seq_map, bert_token_col[index], gold_char_col[index])
         mapping_col.append(seq_map)
+
     return mapping_col
 
 

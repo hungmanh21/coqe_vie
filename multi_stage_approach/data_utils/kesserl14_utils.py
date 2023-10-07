@@ -56,26 +56,27 @@ class DataGenerator(object):
 
         if self.config.model_mode == "bert":
             data_dict['bert_token'] = shared_utils.get_token_col(sent_col, bert_tokenizer=self.bert_tokenizer, dim=1)
+            for i in range(len(data_dict['bert_token'])):
+                data_dict['bert_token'][i] = [item for item in data_dict['bert_token'][i] if item != '▁']
 
-            # print(data_dict['bert_token'][:2])
 
+            # TODO : sửa lại hàm mapping
             mapping_col = shared_utils.token_mapping_bert(data_dict['bert_token'], data_dict['standard_token'])
 
-            # with open('output_mapping_col_videberta.txt', 'w', encoding='utf-8') as file:
-            #     file.write("-------------output_mapping_col_videberta--------------\n")
-            #
-            #     for i in range(len(data_dict['bert_token'])):
-            #         file.write(f"{i}\n")
-            #         file.write(f"{data_dict['standard_token'][i]}\n")
-            #         file.write(f"{data_dict['bert_token'][i]}\n")
-            #         file.write(f"{mapping_col[i]}\n")
+            # for i in range(len(sent_col)):
+            #     if data_dict['comparative_label'][i] == 1:
+            #         print(sent_col[i])
+            #         print(data_dict['standard_token'][i])
+            #         print(data_dict['bert_token'][i])
+            #         print(mapping_col[i])
+            #         break
 
             label_col = cpc.convert_eng_label_dict_by_mapping(label_col, mapping_col)
-            # for i in range(len(data_dict['comparative_label'])):
-            #     if data_dict['comparative_label'] == 1:
-            #         print(data_dict['bert_token'][i])
-            #         print(data_dict['label_col'][i])
-            #         print(label_col[i])
+            for i in range(len(data_dict['comparative_label'])):
+                if data_dict['comparative_label'] == 1:
+                    print(data_dict['bert_token'][i])
+                    print(data_dict['label_col'][i])
+                    print(label_col[i])
 
             tuple_pair_col = cpc.convert_eng_tuple_pair_by_mapping(tuple_pair_col, mapping_col)
 
