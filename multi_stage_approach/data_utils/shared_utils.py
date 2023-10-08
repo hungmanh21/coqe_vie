@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from gensim.models import KeyedVectors
 from gensim.scripts.glove2word2vec import glove2word2vec
+from underthesea import sent_tokenize
 
 ########################################################################################################################
 # configure table change part
@@ -299,6 +300,40 @@ def get_token_col(sent_col, split_symbol=None, bert_tokenizer=None, dim=1, add_n
 
         return token_col
 
+def get_combine_sent_col(sent_col, split_symbol=None, bert_tokenizer=None, dim=1, add_next_sent=None):
+    """
+    :param sent_col: a shape string (finish strip symbol and replace symbol).
+    :param split_symbol: split token by split symbol.
+    :param bert_tokenizer: a object of BERTTokenizer, return bert type token.
+    :param dim: 0 denote a string of sentence. 1 denote a list of sentences.
+    :param add_next_sent:
+    :return: a token_col, shape-like sent_col.
+    """
+    assert split_symbol is not None or bert_tokenizer is not None, "you need send split symbol or bert tokenizer."
+
+    if dim == 0:
+        # using split symbol to split sentence
+        if split_symbol is not None:
+            return split_string(sent_col, split_symbol)
+        # using bert tokenizer to get bert token
+        else:
+            if add_next_sent is None:
+                return ['[CLS]'] + bert_tokenizer.tokenize(sent_col)+['[SEP]']
+            else:
+                return bert_tokenizer.tokenize('[CLS] ' + sent_col + ' [SEP] ' + add_next_sent + ' [SEP]')
+    else:
+        token_col = []
+
+        for index in range(len(sent_col)):
+            split_sent = sent_tokenize(sent_col[index])
+            if len(split_sent) > 1:
+                token_col.append(get_combine_sent_col(split_sent[0], split_symbol, bert_tokenizer, dim - 1), split_sent[1])
+            elif index < len(sent_col)-1:
+                token_col.append(get_combine_sent_col(sent_col[index], split_symbol, bert_tokenizer, dim - 1, sent_col[index+1]))
+            else:
+                token_col.append(get_combine_sent_col(sent_col[index], split_symbol, bert_tokenizer, dim - 1))
+
+        return token_col
 
 # Chinese version split char.
 def get_char_col(sent_col, dim=1):

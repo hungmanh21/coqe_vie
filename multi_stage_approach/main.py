@@ -110,6 +110,7 @@ def main():
     print(model_name)
     print(config)
     if config.data_type == "eng" or config.data_type == "vie":
+        print('khanh vinh test')
         data_gene = kesserl14_utils.DataGenerator(config)
     else:
         data_gene = coae13_utils.DataGenerator(config)

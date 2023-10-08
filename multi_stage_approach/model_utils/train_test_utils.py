@@ -52,6 +52,47 @@ def first_stage_model_train(model, optimizer, train_loader, config, epoch):
 
     print("epoch is {} and Loss: {:.2f}".format(epoch, epoch_loss))
 
+########################################################################################################################
+# COMBINE SENT MODEL
+########################################################################################################################
+def first_stage_combine_model(model, optimizer, train_loader, config, epoch):
+    """
+    :param model:
+    :param optimizer:
+    :param train_loader:
+    :param config:
+    :param epoch:
+    :return:
+    """
+    model.train() # train mode in Pytorch set all parameters that require gradients to require gradients
+
+    epoch_loss = 0
+    for index, data in tqdm(enumerate(train_loader)):
+        input_ids, attn_mask, comparative_label, multi_label, result_label = data
+
+        input_ids = torch.tensor(input_ids).long().to(config.device)
+        attn_mask = torch.tensor(attn_mask).long().to(config.device)
+
+        comparative_label = torch.tensor(comparative_label).long().to(config.device)
+
+        multi_label_numpy = [np.array(arr) for arr in multi_label]
+        multi_label_combined = np.array(multi_label_numpy)
+        multi_label = torch.tensor(multi_label_combined, dtype=torch.long).to(config.device)
+
+        result_label = torch.tensor(result_label).long().to(config.device)
+
+        # multi : e1, e2, aspect
+        # result : predicate
+        loss = model(input_ids, attn_mask, comparative_label, multi_label, result_label)
+
+        loss = torch.sum(loss)
+        epoch_loss += loss.item()
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    print("epoch is {} and Loss: {:.2f}".format(epoch, epoch_loss))
 
 def first_stage_model_test(model, config, test_loader, res_eval, eval_parameters=None, test_type="eval", feature_type=1):
     """
@@ -192,6 +233,8 @@ def first_stage_model_main(
 
     # define first stage model and optimizer
     MODEL2FN = {"bert": pipeline_model_utils.Baseline, "norm": pipeline_model_utils.LSTMModel}
+    MODELCS = pipeline_model_utils.LogisticClassifier(config, 768, 2)
+    optimizer_cs = optimizer_utils.Logistic_Optim(MODELCS)
 
     if config.model_mode == "bert":
         model = MODEL2FN[config.model_mode](config, model_parameters).to(config.device)
@@ -217,6 +260,7 @@ def first_stage_model_main(
 
     # train and test model.
     for epoch in range(config.epochs):
+        first_stage_combine_model(model)
         first_stage_model_train(model, optimizer, train_loader, config, epoch)
         first_stage_model_test(model, config, dev_loader, dev_comp_eval, dev_parameters)
 

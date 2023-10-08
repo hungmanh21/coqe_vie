@@ -5,7 +5,7 @@ from data_utils import shared_utils
 from data_utils import current_program_code as cpc
 from open_source_utils import stanford_utils
 from transformers import BertTokenizer, AutoTokenizer
-
+from underthesea import sent_tokenize
 
 class DataGenerator(object):
     def __init__(self, config):
@@ -32,14 +32,28 @@ class DataGenerator(object):
         :return: a data dict with many parameters
         """
         data_dict = {}
+        print('create_data_dict')
 
         sent_col, sent_label_col, label_col, tuple_pair_col = cpc.read_standard_file(data_path)
+#         combine_sent_col = []
+        combine_label = []
+        for sent in sent_col:
+            if len(sent_tokenize(sent)) > 1:
+                combine_label.append(1)
+            else:
+                combine_label.append(0)
 
         data_dict['label_col'] = label_col
         data_dict['comparative_label'] = sent_label_col
+        data_dict['combine_label'] = combine_label
 
         segmented_sent_col_tokens, label_col, tuple_pair_col = cpc.mapping_segmented_col(sent_col, label_col, tuple_pair_col)
-        sent_col = [" ".join(value) for value in segmented_sent_col_tokens]
+
+        new_segmented_tokens = []
+        for value in sent_col:
+            new_segmented_tokens.append(value.split(' '))
+        segmented_sent_col_tokens = new_segmented_tokens
+#         sent_col = [" ".join(value) for value in segmented_sent_col_tokens]
 
         # LP = LabelParser(label_col, ["entity_1", "entity_2", "aspect", "result"])
         # label_col, tuple_pair_col = LP.parse_sequence_label("&&", sent_col, file_type="eng")
@@ -55,12 +69,13 @@ class DataGenerator(object):
         self.token_max_len = max(self.token_max_len, shared_utils.get_max_token_length(data_dict['standard_token']))
 
         if self.config.model_mode == "bert":
+            # TODO: thêm bert token ghép câu
             data_dict['bert_token'] = shared_utils.get_token_col(sent_col, bert_tokenizer=self.bert_tokenizer, dim=1)
-            for i in range(len(data_dict['bert_token'])):
-                data_dict['bert_token'][i] = [item for item in data_dict['bert_token'][i] if item != '▁']
+            data_dict['bert_combine_sent_token'] = shared_utils.get_combine_sent_col(sent_col, bert_tokenizer=self.bert_tokenizer, dim=1)
+#             for i in range(len(data_dict['bert_token'])):
+#                 data_dict['bert_token'][i] = [item for item in data_dict['bert_token'][i] if item != '▁']
 
 
-            # TODO : sửa lại hàm mapping
             mapping_col = shared_utils.token_mapping_bert(data_dict['bert_token'], data_dict['standard_token'])
 
             # for i in range(len(sent_col)):

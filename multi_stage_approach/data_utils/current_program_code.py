@@ -20,7 +20,7 @@ def read_file(file_path):
     final_label_col = []
     for paragraph in paragraphs:
         lines = paragraph.strip().split('\n')
-        sentence = lines[0].strip()
+        sentence = lines[0].split('   ')[1]
         label_col = []
         if(len(lines) == 1):
             label = 0
@@ -32,7 +32,6 @@ def read_file(file_path):
                 if(i != 0):
                     dictionary = json.loads(lines[i])
                     label_col.append(dictionary)
-
         sent_col.append(sentence)
         sent_label_col.append(label)
         final_label_col.append(label_col)
