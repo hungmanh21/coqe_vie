@@ -51,7 +51,7 @@ def TerminalParser():
     parser.add_argument('--position_sys', help='BIES or BI or SPAN', default='BMES')
 
     parser.add_argument('--device', help='run program in device type',
-                        default='cuda' if torch.cuda.is_available() else 'cpu')
+                        default='cpu' if torch.cuda.is_available() else 'cpu')
 
     parser.add_argument('--file_type', help='the type of data set', default='car')
     parser.add_argument('--premodel_path', help='the type of data set', default=None)

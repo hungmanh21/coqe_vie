@@ -992,9 +992,17 @@ def read_pickle(path):
     :param path:
     :return:
     """
-    with open(path, "rb") as f:
-        data = pickle.load(f)
-    return data
+    representations = []
+    with open(path, 'rb') as file:
+        while True:
+            try:
+                # Đọc tensor từ tệp
+                # tensor_data = torch.load(file)
+                tensor_data = pickle.load(file)
+                representations.append(tensor_data)
+            except EOFError:
+                break
+    return representations
 
 
 def write_pickle(data_dict, path):

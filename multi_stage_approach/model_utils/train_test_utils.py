@@ -1,3 +1,4 @@
+import os
 from collections import Counter
 
 import numpy as np
@@ -13,7 +14,7 @@ from tqdm import tqdm
 ########################################################################################################################
 # Train and Test Program
 ########################################################################################################################
-def first_stage_model_train(model, optimizer, train_loader, config, epoch):
+def first_stage_model_train(model, optimizer, train_loader, config, epoch, train_representations):
     """
     :param model:
     :param optimizer:
@@ -22,7 +23,7 @@ def first_stage_model_train(model, optimizer, train_loader, config, epoch):
     :param epoch:
     :return:
     """
-    model.train() # train mode in Pytorch set all parameters that require gradients to require gradients
+    model.train()  # train mode in Pytorch set all parameters that require gradients to require gradients
 
     epoch_loss = 0
     for index, data in tqdm(enumerate(train_loader)):
@@ -41,7 +42,8 @@ def first_stage_model_train(model, optimizer, train_loader, config, epoch):
 
         # multi : e1, e2, aspect
         # result : predicate
-        loss = model(input_ids, attn_mask, comparative_label, multi_label, result_label)
+        loss = model(input_ids, attn_mask,train_representations[index], comparative_label=comparative_label, elem_label=multi_label,
+                     result_label=result_label,)
 
         loss = torch.sum(loss)
         epoch_loss += loss.item()
@@ -53,7 +55,8 @@ def first_stage_model_train(model, optimizer, train_loader, config, epoch):
     print("epoch is {} and Loss: {:.2f}".format(epoch, epoch_loss))
 
 
-def first_stage_model_test(model, config, test_loader, res_eval, eval_parameters=None, test_type="eval", feature_type=1):
+def first_stage_model_test(model, config, test_loader, res_eval, eval_parameters=None, representations= None,
+                           test_type="eval", feature_type=1):
     """
     :param model:
     :param config:
@@ -85,7 +88,7 @@ def first_stage_model_test(model, config, test_loader, res_eval, eval_parameters
             # elem_output: e1, e2 và aspect
             # result_output: predicate
             # sent_output: 0 or 1
-            bert_feature, elem_feature, elem_output, result_output, sent_output = model(input_ids, attn_mask)
+            bert_feature, elem_feature, elem_output, result_output, sent_output = model(input_ids, attn_mask, representations[index])
 
             if test_type == "eval":
                 res_eval.add_data(elem_output, result_output, attn_mask)
@@ -137,7 +140,8 @@ def pair_stage_model_train(model, optimizer, train_loader, config, epoch):
 
 
 def pair_stage_model_test(
-        model, config, test_loader, res_eval, eval_parameters=None, test_sentence=None, mode="pair", polarity=False, initialize=(False, False)):
+        model, config, test_loader, res_eval, eval_parameters=None, test_sentence=None, mode="pair", polarity=False,
+        initialize=(False, False)):
     """
     :param test_sentence: raw sentence in the data
     :param model: the model
@@ -214,18 +218,34 @@ def first_stage_model_main(
 
     dev_parameters = ["./ModelResult/" + model_name + "/dev_elem_result.txt",
                       "./PreTrainModel/" + model_name + "/dev_model"]
+    train_representations_path = "train_representations.txt"
+    dev_representations_path = "dev_representations.txt"
+    test_representations_path = "test_representations.txt"
+
+    train_representations, dev_representations, test_representations = [], [], []
+    if os.path.exists(train_representations_path):
+        train_representations = shared_utils.read_pickle(train_representations_path)
+    if os.path.exists(dev_representations_path):
+        dev_representations = shared_utils.read_pickle(dev_representations_path)
+    if os.path.exists(test_representations_path):
+        test_representations = shared_utils.read_pickle(test_representations_path)
+    print("---------CHECK LENGTH-------------")
+    print(len(train_representations))
+    print(len(dev_representations))
+    print(len(test_representations))
+    print("---------END CHECK LENGTH-------------")
 
     # train and test model.
     for epoch in range(config.epochs):
-        first_stage_model_train(model, optimizer, train_loader, config, epoch)
-        first_stage_model_test(model, config, dev_loader, dev_comp_eval, dev_parameters)
+        first_stage_model_train(model, optimizer, train_loader, config, epoch, train_representations)
+        first_stage_model_test(model, config, dev_loader, dev_comp_eval, dev_parameters, representations=dev_representations)
 
     print("==================test================")
     predicate_model = torch.load(dev_parameters[1])
 
     test_parameters = ["./ModelResult/" + model_name + "/test_elem_result.txt", None]
 
-    first_stage_model_test(predicate_model, config, test_loader, test_comp_eval, test_parameters)
+    first_stage_model_test(predicate_model, config, test_loader, test_comp_eval, eval_parameters=test_parameters, representations=test_representations)
 
     test_comp_eval.print_elem_result(
         data_gene.test_data_dict['input_ids'], data_gene.test_data_dict['attn_mask'],
@@ -351,4 +371,3 @@ def pair_stage_model_main(config, pair_representation, make_pair_label, pair_eva
 
     # add average measure.
     shared_utils.calculate_average_measure(test_pair_eval, global_pair_eval)
-

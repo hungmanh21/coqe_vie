@@ -10,3 +10,6 @@ multi_stage_approach/model_utils/__pycache__/
 multi_stage_approach/open_source_utils/__pycache__/
 multi_stage_approach/__pycache__/
 test.py
+/multi_stage_approach/dev_representations.txt
+/multi_stage_approach/test_representations.txt
+/multi_stage_approach/train_representations.txt

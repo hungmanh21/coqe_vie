@@ -1,10 +1,11 @@
 import os
 import numpy as np
+import torch
 from data_utils.label_parse import LabelParser
 from data_utils import shared_utils
 from data_utils import current_program_code as cpc
 from open_source_utils import stanford_utils
-from transformers import BertTokenizer, AutoTokenizer
+from transformers import BertTokenizer, AutoTokenizer, AutoModel
 
 
 class DataGenerator(object):
@@ -56,11 +57,8 @@ class DataGenerator(object):
 
         if self.config.model_mode == "bert":
             data_dict['bert_token'] = shared_utils.get_token_col(sent_col, bert_tokenizer=self.bert_tokenizer, dim=1)
-            for i in range(len(data_dict['bert_token'])):
-                data_dict['bert_token'][i] = [item for item in data_dict['bert_token'][i] if item != '▁']
 
 
-            # TODO : sửa lại hàm mapping
             mapping_col = shared_utils.token_mapping_bert(data_dict['bert_token'], data_dict['standard_token'])
 
             # for i in range(len(sent_col)):

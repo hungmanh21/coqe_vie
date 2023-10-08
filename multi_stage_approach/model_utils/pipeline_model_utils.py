@@ -1,10 +1,15 @@
 import copy
+import os
+import pickle
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from model_utils import layer_utils as Layer
 from torch.nn import init
+
+from data_utils import shared_utils
 
 
 class Baseline(nn.Module):
@@ -26,7 +31,7 @@ class Baseline(nn.Module):
             self.gamma = 1
 
         # define sentence classification
-        self.sent_linear = nn.Linear(self.encoder.hidden_size, 2)  # layer for determine whether a sentence has comparision(s)
+        # self.sent_linear = nn.Linear(self.encoder.hidden_size, 2)  # layer for determine whether a sentence has comparision(s)
 
         # define mapping full-connect layer.
         self.W = nn.ModuleList()
@@ -46,7 +51,12 @@ class Baseline(nn.Module):
         for i in range(4):
             self.decoder.append(copy.deepcopy(Layer.CRFCell(len(config.val.norm_id_map), batch_first=True)))
 
-    def forward(self, input_ids, attn_mask, comparative_label=None, elem_label=None, result_label=None):
+        # Saving representations
+        # TODO : tạo một biến mới, nếu mà tồn tại path rồi thì load ra còn không thì thêm mới vào
+
+
+    def forward(self, input_ids, attn_mask, train_representations, comparative_label=None, elem_label=None,
+                result_label=None):
         # get token embedding.
 
         """
@@ -54,7 +64,8 @@ class Baseline(nn.Module):
         sequence_output : Sequence of hidden-states at the output of the last layer of the model.
         pooled_output : Last layer hidden-state of the first token of the sequence (classification token) after further processing
         """
-        token_embedding = self.encoder(input_ids, attn_mask)
+        # token_embedding = self.encoder(input_ids, attn_mask)
+        token_embedding = torch.tensor(train_representations, requires_grad=True).float().to(self.config.device)
 
         batch_size, sequence_length, _ = token_embedding.size()
 
@@ -84,13 +95,13 @@ class Baseline(nn.Module):
             for i in range(len(attn_mask)):
                 non_padding_len = torch.count_nonzero(attn_mask[i])
                 null_result_output = torch.cat(
-                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cuda"),
-                     torch.tensor([-1] * (96 - non_padding_len)).to("cuda")))
+                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cpu"),
+                     torch.tensor([-1] * (96 - non_padding_len)).to("cpu")))
                 if torch.equal(result_output[i], null_result_output):
                     sent_output.append(0)
                 else:
                     sent_output.append(1)
-            sent_output = torch.tensor(sent_output).to("cuda")
+            sent_output = torch.tensor(sent_output).to("cpu")
 
             elem_output = torch.cat(elem_output, dim=0).view(3, batch_size, sequence_length).permute(1, 0, 2)
 
