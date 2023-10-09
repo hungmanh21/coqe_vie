@@ -2320,10 +2320,6 @@ des:
 Trên thực tế sử dụng, Huawei P50 Pro được DXOMark (chuyên trang đánh giá camera uy tín) đánh giá cao hơn iPhone 13 về chất lượng chụp ảnh.
 {"subject": ["7&&Huawei", "8&&P50", "9&&Pro"], "object": ["25&&iPhone", "26&&13"], "aspect": ["28&&chất", "29&&lượng", "30&&chụp", "31&&ảnh"], "predicate": ["21&&đánh", "22&&giá", "23&&cao", "24&&hơn"], "label": "COM+"}
 
-Bởi không chỉ có được sự sắc nét tốt hơn mà các tính năng chụp zoom, hay xóa phông, chỉnh ảnh, quay video…đều cho được chất lượng ấn tượng hơn.
-{"subject": [], "object": [], "aspect": ["6&&sự", "7&&sắc", "8&&nét"], "predicate": ["9&&tốt", "10&&hơn"], "label": "COM+"}
-{"subject": [], "object": [], "aspect": ["12&&các", "13&&tính", "14&&năng", "15&&chụp", "16&&zoom", "17&&,", "18&&hay", "19&&xóa", "20&&phông", "21&&,", "22&&chỉnh", "23&&ảnh", "24&&,", "25&&quay", "26&&video", "27&&…"], "predicate": ["31&&chất", "32&&lượng", "33&&ấn", "34&&tượng", "35&&hơn"], "label": "COM+"}
-
 Dẫu vậy, không phải iPhone 13 Pro Max có chất lượng ảnh kém bởi chính bản thân nó vẫn là chiếc smartphone có chất lượng ảnh chụp tốt hàng đầu trên thị trường hiện nay.
 {"subject": ["19&&nó"], "object": [], "aspect": ["25&&chất", "26&&lượng", "27&&ảnh", "28&&chụp"], "predicate": ["29&&tốt", "30&&hàng", "31&&đầu", "32&&trên", "33&&thị", "34&&trường", "35&&hiện", "36&&nay"], "label": "SUP+"}
 
