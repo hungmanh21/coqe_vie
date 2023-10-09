@@ -3699,8 +3699,6 @@ Nhìn chung, Samsung Galaxy A51 là một chiếc máy hướng đến người 
 {"subject": ["43&&Vivo", "44&&V19"], "object": ["4&&Samsung", "5&&Galaxy", "6&&A51"], "aspect": ["51&&hiệu", "52&&năng"], "predicate": ["48&&nhỉnh", "49&&hơn"], "label": "COM+"}
 {"subject": ["43&&Vivo", "44&&V19"], "object": ["4&&Samsung", "5&&Galaxy", "6&&A51"], "aspect": ["55&&thời", "56&&lượng", "57&&pin"], "predicate": ["48&&nhỉnh", "49&&hơn"], "label": "COM+"}
 
-   
-
 
 Title: So sánh iPhone 13 Pro Max và OPPO Find X5 Pro: Ai mới là ông vua flagship hiện tại?   Title : So sánh iPhone 13 Pro Max và OPPO Find X5 Pro : Ai mới là ông vua flagship hiện tại ?
 

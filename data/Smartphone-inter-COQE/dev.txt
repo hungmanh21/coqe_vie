@@ -417,8 +417,6 @@ alt: Samsung Galaxy M31s   alt : Samsung Galaxy M31s
 
 des: Samsung Galaxy M31s   des : Samsung Galaxy M31s
 
-   
-
 Đi kèm với M31s chính là bộ sạc nhanh 25W của Samsung.   Đi kèm với M31s chính là bộ sạc nhanh 25W của Samsung .
 
 Nó không phải là quá nhanh nhưng khá phù hợp ở tầm trung này.   Nó không phải là quá nhanh nhưng khá phù hợp ở tầm trung này .
@@ -3238,7 +3236,7 @@ Trong khi đó, viên pin của iPhone 12 chỉ có dung lượng 2.815 mAh 'lé
 {"subject": ["8&&iPhone", "9&&12"], "object": ["22&&đôi", "23&&thủ", "24&&của", "25&&mình"], "aspect": ["5&&viên", "6&&pin"], "predicate": ["16&&'", "17&&lép", "18&&vế", "19&&'", "20&&hơn", "21&&hẳn"], "label": "COM-"}
 {"subject": ["5&&viên", "6&&pin", "7&&của", "8&&iPhone", "9&&12"], "object": ["22&&đôi", "23&&thủ", "24&&của", "25&&mình"], "aspect": ["12&&dung", "13&&lượng"], "predicate": ["16&&'", "17&&lép", "18&&vế", "19&&'", "20&&hơn", "21&&hẳn"], "label": "COM-"}
 
-iPhone 12 cũng được trang bị công nghệ sạc nhanh nhưng chỉ khoảng 20W và sạc không dây 15W, nhưng không có sạc không dây ngược như Mi 11.   iPhone 12 cũng được trang bị công nghệ sạc nhanh nhưng chỉ khoảng 20W và sạc không dây 15W , nhưng không có sạc không dây ngược như Mi 11 .
+iPhone 12 cũng được trang bị công nghệ sạc nhanh nhưng chỉ khoảng 20W và sạc không dây 15W, nhưng không có sạc không dây ngược như Mi 11 .   iPhone 12 cũng được trang bị công nghệ sạc nhanh nhưng chỉ khoảng 20W và sạc không dây 15W , nhưng không có sạc không dây ngược như Mi 11 .
 {"subject": ["1&&iPhone", "2&&12"], "object": ["29&&Mi", "30&&11"], "aspect": ["24&&sạc", "25&&không", "26&&dây", "27&&ngược"], "predicate": ["22&&không", "23&&có", "24&&sạc", "25&&không", "26&&dây", "27&&ngược", "28&&như"], "label": "DIF"}
 
 alt: Thời lượng pin và tốc độ sạc của Xiaomi Mi 11 và iPhone 12   alt : Thời lượng pin và tốc độ sạc của Xiaomi Mi 11 và iPhone 12

@@ -3296,9 +3296,6 @@ Màn hình độ sáng & độ mượt tuyệt vời!   Màn hình độ sáng &
 
 Độ sáng cực cao đến 1.750 nits   Độ sáng cực cao đến 1.750 nits
 
-Dòng Galaxy S22 series tự hào có một số cải tiến về hiển thị, nổi bật là nỗ lực tạo ra màn hình sáng nhất trên bất kỳ điện thoại thông minh nào.Trong trường hợp của Galaxy S22 Ultra, điều đó có nghĩa là màn hình hứa hẹn có độ sáng cao nhất là 1.750 nits.   Dòng Galaxy S22 series tự hào có một số cải tiến về hiển thị , nổi bật là nỗ lực tạo ra màn hình sáng nhất trên bất kỳ điện thoại thông minh nào.Trong trường hợp của Galaxy S22 Ultra , điều đó có nghĩa là màn hình hứa hẹn có độ sáng cao nhất là 1.750 nits .
-{"subject": ["1&&Dòng", "2&&Galaxy", "3&&S22", "4&&series"], "object": [], "aspect": ["23&&màn", "24&&hình"], "predicate": ["25&&sáng", "26&&nhất", "27&&trên", "28&&bất", "29&&kỳ", "30&&điện", "31&&thoại", "32&&thông", "33&&minh", "34&&nào.Trong"], "label": "SUP+"}
-
 Và với tính năng Vision Booster của Samsung, Galaxy S22 Ultra sẽ điều chỉnh màn hình hiển thị và cân bằng màu sắc dựa trên ánh sáng xung quanh.   Và với tính năng Vision Booster của Samsung , Galaxy S22 Ultra sẽ điều chỉnh màn hình hiển thị và cân bằng màu sắc dựa trên ánh sáng xung quanh .
 
 Bạn không cần phải đi sâu vào cài đặt của điện thoại để có được sự hiển thị vừa mắt nhất.   Bạn không cần phải đi sâu vào cài đặt của điện thoại để có được sự hiển thị vừa mắt nhất .
@@ -9274,5 +9271,3 @@ Thiết bị không chỉ chụp được các bức ảnh rõ nét trong điề
 {"subject": ["1&&Thiết", "2&&bị"], "object": ["53&&chiếc", "54&&điện", "55&&thoại", "56&&nào", "57&&trên", "58&&thị", "59&&trường"], "aspect": ["31&&khả", "32&&năng", "33&&tái", "34&&tạo", "35&&màu", "36&&sắc", "37&&chính", "38&&xác", "39&&và", "40&&ổn", "41&&định", "42&&trong", "43&&hầu", "44&&hết", "45&&mọi", "46&&điều", "47&&kiện"], "predicate": ["51&&hiếm", "52&&có", "53&&chiếc", "54&&điện", "55&&thoại", "56&&nào", "57&&trên", "58&&thị", "59&&trường", "60&&có", "61&&thể", "62&&làm", "63&&được"], "label": "DIF"}
 
 Tuy nhiên vì giới hạn vật lý, camera góc siêu rộng và camera tele vẫn chỉ phù hợp trong các điều kiện đủ sáng hoặc thiếu sáng vừa phải.   Tuy nhiên vì giới hạn vật lý , camera góc siêu rộng và camera tele vẫn chỉ phù hợp trong các điều kiện đủ sáng hoặc thiếu sáng vừa phải .
-
-
