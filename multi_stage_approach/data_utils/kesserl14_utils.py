@@ -7,6 +7,7 @@ from open_source_utils import stanford_utils
 from transformers import BertTokenizer, AutoTokenizer
 from underthesea import sent_tokenize
 
+
 class DataGenerator(object):
     def __init__(self, config):
         """
@@ -35,7 +36,7 @@ class DataGenerator(object):
         print('create_data_dict')
 
         sent_col, sent_label_col, label_col, tuple_pair_col = cpc.read_standard_file(data_path)
-#         combine_sent_col = []
+        #         combine_sent_col = []
         combine_label = []
         for sent in sent_col:
             if len(sent_tokenize(sent)) > 1:
@@ -47,13 +48,21 @@ class DataGenerator(object):
         data_dict['comparative_label'] = sent_label_col
         data_dict['combine_label'] = combine_label
 
-        segmented_sent_col_tokens, label_col, tuple_pair_col = cpc.mapping_segmented_col(sent_col, label_col, tuple_pair_col)
+        segmented_sent_col_tokens, label_col, tuple_pair_col = cpc.mapping_segmented_col(sent_col, label_col,
+                                                                                         tuple_pair_col)
 
-        new_segmented_tokens = []
-        for value in sent_col:
-            new_segmented_tokens.append(value.split(' '))
-        segmented_sent_col_tokens = new_segmented_tokens
-#         sent_col = [" ".join(value) for value in segmented_sent_col_tokens]
+        # for i in range(len(data_dict['comparative_label'])):
+        #     if data_dict['comparative_label'][i] == 1:
+        #         print("----------CEHCK LABEL COL-----------")
+        #         print(label_col[i])
+        #         print("----------END CEHCK LABEL COL-----------")
+
+        # new_segmented_tokens = []
+        # for value in sent_col:
+        #     new_segmented_tokens.append(value.split(' '))
+        # segmented_sent_col_tokens = new_segmented_tokens
+        sent_col = [" ".join(value) for value in segmented_sent_col_tokens]
+        #         sent_col = [" ".join(value) for value in segmented_sent_col_tokens]
 
         # LP = LabelParser(label_col, ["entity_1", "entity_2", "aspect", "result"])
         # label_col, tuple_pair_col = LP.parse_sequence_label("&&", sent_col, file_type="eng")
@@ -71,10 +80,14 @@ class DataGenerator(object):
         if self.config.model_mode == "bert":
             # TODO: thêm bert token ghép câu
             data_dict['bert_token'] = shared_utils.get_token_col(sent_col, bert_tokenizer=self.bert_tokenizer, dim=1)
-            data_dict['bert_combine_sent_token'] = shared_utils.get_combine_sent_col(sent_col, bert_tokenizer=self.bert_tokenizer, dim=1)
-#             for i in range(len(data_dict['bert_token'])):
-#                 data_dict['bert_token'][i] = [item for item in data_dict['bert_token'][i] if item != '▁']
-
+            data_dict['bert_combine_sent_token'] = shared_utils.get_combine_sent_col(sent_col,
+                                                                                     bert_tokenizer=self.bert_tokenizer,
+                                                                                     dim=1)
+            # print("-----------CHECK BERT COMBINE TOKEN----------")
+            # print(data_dict['bert_combine_sent_token'][:2])
+            # print("-----------END CHECK BERT COMBINE TOKEN----------")
+            #             for i in range(len(data_dict['bert_token'])):
+            #                 data_dict['bert_token'][i] = [item for item in data_dict['bert_token'][i] if item != '▁']
 
             mapping_col = shared_utils.token_mapping_bert(data_dict['bert_token'], data_dict['standard_token'])
 
@@ -84,20 +97,25 @@ class DataGenerator(object):
             #         print(data_dict['standard_token'][i])
             #         print(data_dict['bert_token'][i])
             #         print(mapping_col[i])
-            #         break
 
-            label_col = cpc.convert_eng_label_dict_by_mapping(label_col, mapping_col)
-            for i in range(len(data_dict['comparative_label'])):
-                if data_dict['comparative_label'] == 1:
-                    print(data_dict['bert_token'][i])
-                    print(data_dict['label_col'][i])
-                    print(label_col[i])
+            label_col = cpc.convert_eng_label_dict_by_mapping(label_col, mapping_col, data_dict['bert_token'], data_dict['standard_token'])
+            # for i in range(len(data_dict['comparative_label'])):
+            #     if data_dict['comparative_label'] == 1:
+            #         print(data_dict['bert_token'][i])
+            #         print(data_dict['label_col'][i])
+            #         print(label_col[i])
 
             tuple_pair_col = cpc.convert_eng_tuple_pair_by_mapping(tuple_pair_col, mapping_col)
 
             data_dict['input_ids'] = shared_utils.bert_data_transfer(
                 self.bert_tokenizer,
                 data_dict['bert_token'],
+                "tokens"
+            )
+
+            data_dict['input_combine_sent_ids'] = shared_utils.bert_data_transfer(
+                self.bert_tokenizer,
+                data_dict['bert_combine_sent_token'],
                 "tokens"
             )
 
@@ -125,6 +143,8 @@ class DataGenerator(object):
         token_col = data_dict['standard_token'] if self.config.model_mode == "norm" else data_dict['bert_token']
 
         data_dict['attn_mask'] = shared_utils.get_mask(token_col, dim=1)
+
+        data_dict['attn_combine_sent_mask'] = shared_utils.get_mask(data_dict['bert_combine_sent_token'], dim=1)
 
         special_symbol = False
 
@@ -182,8 +202,9 @@ class DataGenerator(object):
         :param data_dict:
         :return:
         """
-        pad_key_ids = {0: ["input_ids", "attn_mask", "result_label"],
-                       1: ["multi_label"]}
+        pad_key_ids = {
+            0: ["input_ids", "attn_mask", "result_label", "input_combine_sent_ids", "attn_combine_sent_mask"],
+            1: ["multi_label"]}
 
         cur_max_len = self.char_max_len
 
@@ -208,12 +229,14 @@ class DataGenerator(object):
         :param data_dict:
         :return:
         """
-        key_col = ["input_ids", "attn_mask", "tuple_pair_col", "result_label", "multi_label", "comparative_label"]
+        key_col = ["input_ids", "attn_mask", "tuple_pair_col", "result_label", "multi_label", "comparative_label",
+                   "input_combine_sent_ids", "attn_combine_sent_mask", "combine_label"]
 
         for key in key_col:
             data_dict[key] = np.array(data_dict[key])
             print(key, data_dict[key].shape)
 
         data_dict['comparative_label'] = np.array(data_dict['comparative_label']).reshape(-1, 1)
+        data_dict['combine_label'] = np.array(data_dict['combine_label']).reshape(-1, 1)
 
         return data_dict

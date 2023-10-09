@@ -291,7 +291,7 @@ def get_token_col(sent_col, split_symbol=None, bert_tokenizer=None, dim=1, add_n
             if add_next_sent is None:
                 return ['[CLS]'] + bert_tokenizer.tokenize(sent_col)+['[SEP]']
             else:
-                return bert_tokenizer.tokenize('[CLS] ' + sent_col + ' [SEP] ' + add_next_sent + ' [SEP]')
+                return ['[CLS]'] + bert_tokenizer.tokenize(sent_col) + ['[SEP]'] + bert_tokenizer.tokenize(add_next_sent) + ['[SEP]']
     else:
         token_col = []
 
@@ -320,14 +320,14 @@ def get_combine_sent_col(sent_col, split_symbol=None, bert_tokenizer=None, dim=1
             if add_next_sent is None:
                 return ['[CLS]'] + bert_tokenizer.tokenize(sent_col)+['[SEP]']
             else:
-                return bert_tokenizer.tokenize('[CLS] ' + sent_col + ' [SEP] ' + add_next_sent + ' [SEP]')
+                return ['[CLS]'] + bert_tokenizer.tokenize(sent_col) +['[SEP]'] + bert_tokenizer.tokenize(add_next_sent) +['[SEP]']
     else:
         token_col = []
 
         for index in range(len(sent_col)):
             split_sent = sent_tokenize(sent_col[index])
             if len(split_sent) > 1:
-                token_col.append(get_combine_sent_col(split_sent[0], split_symbol, bert_tokenizer, dim - 1), split_sent[1])
+                token_col.append(get_combine_sent_col(split_sent[0], split_symbol, bert_tokenizer, dim - 1, split_sent[1]))
             elif index < len(sent_col)-1:
                 token_col.append(get_combine_sent_col(sent_col[index], split_symbol, bert_tokenizer, dim - 1, sent_col[index+1]))
             else:
@@ -528,16 +528,16 @@ def token_mapping_bert(bert_token_col, gold_token_col):
             bert_length = len(seq_bert_token[bert_index])
 
             # drop "##" prefix
-            if seq_bert_token[bert_index].find('▁') != -1:
-                bert_length = len(seq_bert_token[bert_index]) - 1
+            if seq_bert_token[bert_index].find('@@') != -1:
+                bert_length = len(seq_bert_token[bert_index]) - 2
 
             while token_length > bert_length:
                 bert_index = bert_index + 1
                 seq_map[token_index].append(bert_index)
                 bert_length += len(seq_bert_token[bert_index])
 
-                if seq_bert_token[bert_index].find('▁') != -1:
-                    bert_length -= 1
+                if seq_bert_token[bert_index].find('@@') != -1:
+                    bert_length -= 2
 
             # assert bert_length == token_length, "appear mapping error!"
             # check_utils.check_mapping_process(seq_map, seq_gold_token, seq_bert_token)

@@ -35,7 +35,8 @@ def get_loader(data_list, batch_size):
 
 def create_first_data_loader(data_dict, batch_size, mask_index=None):
     feature_data = [data_dict['input_ids'], data_dict['attn_mask'], data_dict['comparative_label'],
-                    data_dict['multi_label'], data_dict['result_label']]
+                    data_dict['multi_label'], data_dict['result_label'],
+                    data_dict['input_combine_sent_ids'], data_dict['attn_combine_sent_mask'],data_dict["combine_label"] ]
 
     print("feature size: ", len(feature_data))
 
