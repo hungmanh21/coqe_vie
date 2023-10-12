@@ -13,3 +13,4 @@ test.py
 /multi_stage_approach/dev_representations.txt
 /multi_stage_approach/test_representations.txt
 /multi_stage_approach/train_representations.txt
+/multi_stage_approach/output_quintuples.txt
