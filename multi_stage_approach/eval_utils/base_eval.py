@@ -706,8 +706,8 @@ class ElementEvaluation(BaseEvaluation):
         những câu mà model predict ko phải câu so sánh thì các phần tử trong predict sẽ được gán lại là rỗng
         self.comparative_identity sẽ chỉ True khi mà config.model_type là multitask hoặc là classification
         """
-        # if self.comparative_identity:
-        #     self.predict_dict = self.mask_non_comparative(self.predict_dict, self.predict_sent_label)
+        if self.comparative_identity:
+            self.predict_dict = self.mask_non_comparative(self.predict_dict, self.predict_sent_label)
 
         # using exact, proportional and binary measure model.
         key_col = self.elem_col
@@ -1099,7 +1099,8 @@ class ElementEvaluation(BaseEvaluation):
 
 
 class PairEvaluation(BaseEvaluation):
-    def __init__(self, config, candidate_pair_col, gold_pair_col, elem_col, ids_to_tags, save_model=False, fold=0):
+    def __init__(self, config, candidate_pair_col, gold_pair_col, elem_col, ids_to_tags, save_model=False,
+                 test_tokens = None, test_sent = None, fold=0):
         super(PairEvaluation, self).__init__(
             config, elem_col=elem_col, ids_to_tags=ids_to_tags, save_model=save_model, fold=fold
         )
@@ -1107,10 +1108,13 @@ class PairEvaluation(BaseEvaluation):
         self.candidate_pair_col = candidate_pair_col
         self.gold_pair_col = gold_pair_col
 
+        self.test_tokens = test_tokens
+        self.test_sent = test_sent
+
         self.y_hat = []
         self.polarity_hat = []
 
-    def eval_model(self, measure_file, test_sentence=None, model=None, model_path=None, polarity=False,
+    def eval_model(self, measure_file, model=None, model_path=None, polarity=False,
                    initialize=(False, False)):
         """
         :param measure_file: a file path to write result.
@@ -1131,16 +1135,18 @@ class PairEvaluation(BaseEvaluation):
 
         predict_tuple_pair_col = self.get_predict_truth_tuple_pair(self.candidate_pair_col)
 
-        # if polarity:
-        #     with open("output_quintuples_train.txt", 'w', encoding='utf-8') as file:
-        #         for i in range(len(self.gold_pair_col)):
-        #             sent = ', '.join([f"'{x}'" for x in test_sentence[i]])
-        #             sent_2 = ', '.join([f"'{x}'" for x in predict_tuple_pair_col[i]])
-        #             sent_3 = ', '.join([f"'{x}'" for x in self.gold_pair_col[i]])
-        #             file.write(f"[{sent}]\n")
-        #             file.write(f"[{sent_2}]\n")
-        #             file.write(f"[{sent_3}]\n")
-        #             file.write("\n")
+        if polarity and self.test_tokens and self.test_sent:
+            with open("output_quintuples.txt", 'w', encoding='utf-8') as file:
+                for i in range(len(self.gold_pair_col)):
+                    sentence = ', '.join([f"'{x}'" for x in self.test_sent[i]])
+                    sent = ', '.join([f"'{x}'" for x in self.test_tokens[i]])
+                    sent_2 = ', '.join([f"'{x}'" for x in predict_tuple_pair_col[i]])
+                    sent_3 = ', '.join([f"'{x}'" for x in self.gold_pair_col[i]])
+                    file.write(f"[{sentence}]\n")
+                    file.write(f"[{sent}]\n")
+                    file.write(f"[{sent_2}]\n")
+                    file.write(f"[{sent_3}]\n")
+                    file.write("\n")
 
         assert len(self.gold_pair_col) == len(predict_tuple_pair_col), "data length error!"
 

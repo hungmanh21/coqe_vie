@@ -1,3 +1,4 @@
+import collections
 import os
 import numpy as np
 import torch
@@ -39,17 +40,13 @@ class DataGenerator(object):
         data_dict['label_col'] = label_col
         data_dict['comparative_label'] = sent_label_col
 
-        segmented_sent_col_tokens, label_col, tuple_pair_col = cpc.mapping_segmented_col(sent_col, label_col, tuple_pair_col)
+        print("---------CHECK FREQUENCY------------")
+        print(collections.Counter(sent_label_col))
+        print("---------END CHECK FREQUENCY------------")
+
+        segmented_sent_col_tokens, label_col, tuple_pair_col, new_sent_col = cpc.mapping_segmented_col(sent_col, label_col, tuple_pair_col)
+        data_dict['sent_col'] = new_sent_col
         sent_col = [" ".join(value) for value in segmented_sent_col_tokens]
-
-        # LP = LabelParser(label_col, ["entity_1", "entity_2", "aspect", "result"])
-        # label_col, tuple_pair_col = LP.parse_sequence_label("&&", sent_col, file_type="eng")
-
-        # if not os.path.exists(self.config.path.pre_process_data[data_type]):
-        #     data_dict['standard_token'] = segmented_sent_col_tokens
-        #     shared_utils.write_pickle(data_dict, self.config.path.pre_process_data[data_type])
-        # else:
-        #     data_dict = shared_utils.read_pickle(self.config.path.pre_process_data[data_type])
 
         data_dict['standard_token'] = segmented_sent_col_tokens
 
@@ -57,7 +54,6 @@ class DataGenerator(object):
 
         if self.config.model_mode == "bert":
             data_dict['bert_token'] = shared_utils.get_token_col(sent_col, bert_tokenizer=self.bert_tokenizer, dim=1)
-
 
             mapping_col = shared_utils.token_mapping_bert(data_dict['bert_token'], data_dict['standard_token'])
 

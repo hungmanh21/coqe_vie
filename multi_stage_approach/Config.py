@@ -50,10 +50,10 @@ class PathConfig(object):
         # nlp tool file path
         if device == "cpu":
             self.stanford_path = r"D:/stanford-corenlp-full-2018-10-05"
-            self.bert_model_path = "Fsoft-AIC/videberta-base" if file_type == "Smartphone-COQE" else r"bert-base-uncased"
+            self.bert_model_path = "vinai/phobert-base-v2" if file_type == "Smartphone-COQE" else r"bert-base-uncased"
         else:
             self.stanford_path = r"D:/stanford-corenlp-full-2018-10-05"
-            self.bert_model_path = "Fsoft-AIC/videberta-base" if file_type == "Smartphone-COQE" else r"bert-base-uncased"
+            self.bert_model_path = "vinai/phobert-base-v2" if file_type == "Smartphone-COQE" else r"bert-base-uncased"
 
         self.pre_process_data = {
             "train": "../data/pre_process/{}_train_data.txt".format(file_type),

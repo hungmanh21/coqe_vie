@@ -55,13 +55,21 @@ def extract_indices(label_quin):
                         global_elem_col[key] = ()
                         each_tuple_pair.append((-1, -1))
                 else:
-                    cp = 2  # COM SUP DIF
-                    if label_quin['label'] in ('COM+', 'SUP+'):
-                        cp = 1
+                    cp = 6
+                    if label_quin['label'] == 'DIF':
+                        cp = -1
                     elif label_quin['label'] == 'EQL':
                         cp = 0
-                    elif label_quin['label'] in ('COM-', 'SUP-'):
-                        cp = -1
+                    elif label_quin['label'] == 'SUP+':
+                        cp = 1
+                    elif label_quin['label'] == 'SUP-':
+                        cp = 2
+                    elif label_quin['label'] == 'SUP':
+                        cp = 3
+                    elif label_quin['label'] == 'COM+':
+                        cp = 4
+                    elif label_quin['label'] == 'COM-':
+                        cp = 5
                     global_elem_col[key].add((int(index_list[0]) - 1, int(index_list[-1]), cp))
                     each_tuple_pair.append((int(index_list[0]) - 1, int(index_list[-1])))
                     each_tuple_pair.append((cp, cp))
@@ -270,7 +278,7 @@ def mapping_segmented_col(sent_col, label_col, tuple_pair_col):
                 mapped_sublist.append(tuple_pair[4])
                 mapped_sublist_2d.append(mapped_sublist)
             new_tuple_pair_col.append(mapped_sublist_2d)
-    return segmented_sent_col, new_label_col, new_tuple_pair_col
+    return segmented_sent_col, new_label_col, new_tuple_pair_col, new_sent_col
 
 
 
@@ -878,7 +886,6 @@ def create_polarity_train_data(config, tuple_pair_col, feature_out, bert_feature
 
             representation_col.append(cur_representation)
 
-            assert tuple_pair_col[index][pair_index][-1][0] in {-1, 0, 1, 2}, "[ERROR] Tuple Pair Col Error."
             polarity_col.append([tuple_pair_col[index][pair_index][-1][0] + 1])
 
     return representation_col, polarity_col
@@ -1082,7 +1089,6 @@ def create_polarity_train_data_infer_sent(tuple_pair_col, feature_out, bert_feat
 
             representation_col.append(cur_representation)
 
-            assert tuple_pair_col[index][pair_index][-1][0] in {-1, 0, 1, 2}, "[ERROR] Tuple Pair Col Error."
             polarity_col.append([tuple_pair_col[index][pair_index][-1][0] + 1])
 
     return representation_col, polarity_col

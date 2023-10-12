@@ -19,6 +19,11 @@ class Baseline(nn.Module):
 
         self.encoder = Layer.BERTCell(config.path.bert_model_path)  # define encoder layer
 
+        self.encoder_2 = Layer.LSTMCell(
+            self.encoder.hidden_size, config.hidden_size, config.num_layers,
+            config.device, batch_first=True, bidirectional=True
+        )
+
         self.embedding_dropout = nn.Dropout(model_parameters['embed_dropout'])  # define dropout layer
         """During training, randomly zeroes some of the elements of the input tensor with probability p using samples 
         from a Bernoulli distribution. Each channel will be zeroed out independently on every forward call."""
@@ -43,7 +48,8 @@ class Baseline(nn.Module):
             self.encoder.hidden_size = 768
             config.val.norm_id_map = {'O': 0, 'B': 1, 'M': 2, 'E': 3, 'S': 4}
             """
-            self.W.append(copy.deepcopy(nn.Linear(self.encoder.hidden_size, len(config.val.norm_id_map))))
+            # self.W.append(copy.deepcopy(nn.Linear(self.encoder.hidden_size, len(config.val.norm_id_map))))
+            self.W.append(copy.deepcopy(nn.Linear(config.hidden_size*2, len(config.val.norm_id_map))))
 
         # define multi-crf decode the sequence.
         # có 4 CRF đại diện cho 4 phần tử để decode
@@ -55,7 +61,7 @@ class Baseline(nn.Module):
         # TODO : tạo một biến mới, nếu mà tồn tại path rồi thì load ra còn không thì thêm mới vào
 
 
-    def forward(self, input_ids, attn_mask, train_representations, comparative_label=None, elem_label=None,
+    def forward(self, input_ids, attn_mask, comparative_label=None, elem_label=None,
                 result_label=None):
         # get token embedding.
 
@@ -64,12 +70,13 @@ class Baseline(nn.Module):
         sequence_output : Sequence of hidden-states at the output of the last layer of the model.
         pooled_output : Last layer hidden-state of the first token of the sequence (classification token) after further processing
         """
-        # token_embedding = self.encoder(input_ids, attn_mask)
-        token_embedding = torch.tensor(train_representations, requires_grad=True).float().to(self.config.device)
+        token_embedding = self.encoder(input_ids, attn_mask)
 
         batch_size, sequence_length, _ = token_embedding.size()
 
-        final_embedding = self.embedding_dropout(token_embedding)
+        final_token_embedding, _ = self.encoder_2(token_embedding)
+
+        final_embedding = self.embedding_dropout(final_token_embedding)
         # class_embedding = self.embedding_dropout(pooled_output)
 
         # linear mapping.
@@ -95,13 +102,13 @@ class Baseline(nn.Module):
             for i in range(len(attn_mask)):
                 non_padding_len = torch.count_nonzero(attn_mask[i])
                 null_result_output = torch.cat(
-                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cpu"),
-                     torch.tensor([-1] * (96 - non_padding_len)).to("cpu")))
+                    (torch.zeros(non_padding_len, dtype=torch.int8, device="cuda"),
+                     torch.tensor([-1] * (len(attn_mask[i]) - non_padding_len)).to("cuda")))
                 if torch.equal(result_output[i], null_result_output):
                     sent_output.append(0)
                 else:
                     sent_output.append(1)
-            sent_output = torch.tensor(sent_output).to("cpu")
+            sent_output = torch.tensor(sent_output).to("cuda")
 
             elem_output = torch.cat(elem_output, dim=0).view(3, batch_size, sequence_length).permute(1, 0, 2)
 
@@ -190,7 +197,7 @@ class LSTMModel(nn.Module):
                 non_padding_len = torch.count_nonzero(attn_mask[i])
                 null_result_output = torch.cat(
                     (torch.zeros(non_padding_len, dtype=torch.int8, device="cuda"),
-                     torch.tensor([-1] * (96 - non_padding_len)).to("cuda")))
+                     torch.tensor([-1] * (len(attn_mask[i]) - non_padding_len)).to("cuda")))
                 if torch.equal(result_output[i], null_result_output):
                     sent_output.append(0)
                 else:

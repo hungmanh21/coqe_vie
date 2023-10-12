@@ -51,7 +51,7 @@ def TerminalParser():
     parser.add_argument('--position_sys', help='BIES or BI or SPAN', default='BMES')
 
     parser.add_argument('--device', help='run program in device type',
-                        default='cpu' if torch.cuda.is_available() else 'cpu')
+                        default='cuda' if torch.cuda.is_available() else 'cpu')
 
     parser.add_argument('--file_type', help='the type of data set', default='car')
     parser.add_argument('--premodel_path', help='the type of data set', default=None)
@@ -107,8 +107,6 @@ def main():
         {"config": config_parameters, "model": model_parameters}
     )
 
-    print(model_name)
-    print(config)
     if config.data_type == "eng" or config.data_type == "vie":
         data_gene = kesserl14_utils.DataGenerator(config)
     else:
@@ -175,7 +173,6 @@ def main():
             data_gene.test_data_dict['comparative_label'],
             data_gene.test_data_dict['attn_mask'],
             save_model=False,
-            test_sentence = data_gene.test_data_dict['bert_token']
         )
 
         train_test_utils.first_stage_model_test(
@@ -211,7 +208,7 @@ def main():
             print("[ERROR] pre-train model isn't exist")
             return
 
-        elem_model = torch.load(pre_train_model_path)
+        elem_model = torch.load(pre_train_model_path).to("cuda")
 
         test_first_process_data_path = "./ModelResult/" + model_name + "/test_first_data_" + str(feature_type) + ".txt"
 
@@ -250,7 +247,9 @@ def main():
             candidate_pair_col=test_candidate_pair_col,
             elem_col=config.val.elem_col,
             ids_to_tags=config.val.norm_id_map,
-            save_model=False
+            save_model=False,
+            test_tokens = data_gene.test_data_dict['bert_token'],
+            test_sent = data_gene.test_data_dict['sent_col']
         )
 
         test_pair_loader = data_loader_utils.get_loader([test_pair_representation], 1)
