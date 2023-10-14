@@ -228,31 +228,41 @@ class LogisticClassifier(nn.Module):
         self.class_num = class_num
 
         self.feature_dim = feature_dim
-        self.fc = nn.Linear(feature_dim, class_num)
+        self.fc = nn.Linear(4 * (5 + 768), 2)
+
+        self.fc_2 = nn.Linear((5 + 768), 9)
         self.weight = weight
 
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, pair_representation, pair_label=None):
         if pair_label is not None:
+            valid_label, polarity_label = pair_label
+            valid_label = torch.tensor(valid_label).long().to(self.config.device)
+            polarity_label = torch.tensor(polarity_label).long().to(self.config.device)
+
             valid_indices = ~torch.isnan(pair_representation)
             valid_indices = torch.nonzero(valid_indices.all(dim=1)).squeeze().cpu().numpy()
             pair_representation = pair_representation[valid_indices]
-        elif self.feature_dim == 773:
-            pair_representation = pair_representation[:, :, :, 2319:3092]
+            polarity_representation = pair_representation[:, 2319:3092]
+        else:
+            polarity_representation = pair_representation[:, :, :, 2319:3092]
+        # valid
+        predict_label = self.fc(pair_representation.view(-1, 4 * (5 + 768)))
 
-        predict_label = self.fc(pair_representation.view(-1, self.feature_dim))
-        predict_label = self.dropout(predict_label)
+        # label
+        predict_label_2 = self.fc_2(polarity_representation.view(-1, (5 + 768)))
 
         # weight = torch.tensor([1, 1, 1, 1]).float().to(self.config.device)
         # calculate loss.
         if pair_label is not None:
-            pair_label = pair_label[valid_indices]
-            if self.weight is not None:
-                self.weight = self.weight.to(self.config.device)
-                criterion = nn.CrossEntropyLoss(weight=self.weight)
-            else:
-                criterion = nn.CrossEntropyLoss()
-            return criterion(predict_label, pair_label.view(-1))
+            valid_label = valid_label[valid_indices]
+            polarity_label = polarity_label[valid_indices]
+            # if self.weight is not None:
+            #     self.weight = self.weight.to(self.config.device)
+            #     criterion = nn.CrossEntropyLoss(weight=self.weight)
+            # else:
+            criterion = nn.CrossEntropyLoss()
+            return criterion(predict_label, valid_label.view(-1)) + criterion(predict_label_2, polarity_label.view(-1))
         else:
-            return torch.max(F.softmax(predict_label, dim=-1), dim=-1)[-1]
+            return torch.max(F.softmax(predict_label, dim=-1), dim=-1)[-1], torch.max(F.softmax(predict_label_2, dim=-1), dim=-1)[-1]

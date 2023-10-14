@@ -767,11 +767,11 @@ def create_predicate_info(predicate_vocab, token_col):
     return predicate_index_col
 
 
-def generate_train_pair_data(data_representation, data_label):
+def generate_train_pair_data(data_representation, data_label, data_polarity_label):
     assert len(data_representation) == len(data_label), "[ERROR] Data Length Error."
 
     feature_dim = len(data_representation[0][0])
-    final_representation, final_label = [], []
+    final_representation, final_label, final_polarity_col = [], [], []
 
     for index in range(len(data_representation)):
         if data_representation[index] == [[0] * feature_dim]:
@@ -780,8 +780,9 @@ def generate_train_pair_data(data_representation, data_label):
         for pair_index in range(len(data_representation[index])):
             final_representation.append(data_representation[index][pair_index])
             final_label.append([data_label[index][pair_index]])
+            final_polarity_col.append([data_polarity_label[index][pair_index]])
 
-    return final_representation, final_label
+    return final_representation, final_label, final_polarity_col
 
 
 def create_polarity_train_data(config, tuple_pair_col, feature_out, bert_feature_out, feature_type=1):

@@ -229,17 +229,17 @@ def main():
                 test_first_process_data_path
             )
 
-        dev_pair_parameters = ["./ModelResult/" + cross_model_name + "/dev_pair_result.txt",
+        dev_pair_polarity_parameters = ["./ModelResult/" + cross_model_name + "/dev_pair_result.txt",
                                "./PreTrainModel/" + cross_model_name + "/dev_pair_model"]
 
-        dev_polarity_parameters = ["./ModelResult/" + cross_model_name + "/dev_polarity_result.txt",
-                                   "./PreTrainModel/" + cross_model_name + "/dev_polarity_model"]
+        # dev_polarity_parameters = ["./ModelResult/" + cross_model_name + "/dev_polarity_result.txt",
+        #                            "./PreTrainModel/" + cross_model_name + "/dev_polarity_model"]
 
         test_pair_parameters = ["./ModelResult/" + cross_model_name + "/test_pair_result.txt", None]
         test_polarity_parameters = ["./ModelResult/" + cross_model_name + "/test_pair_result.txt", None]
 
-        predict_pair_model = torch.load(dev_pair_parameters[1])
-        predict_polarity_model = torch.load(dev_polarity_parameters[1])
+        predict_pair_polarity_model = torch.load(dev_pair_polarity_parameters[1])
+        # predict_polarity_model = torch.load(dev_polarity_parameters[1])
 
         test_pair_eval = PairEvaluation(
             config,
@@ -255,7 +255,7 @@ def main():
         test_pair_loader = data_loader_utils.get_loader([test_pair_representation], 1)
 
         train_test_utils.pair_stage_model_test(
-            predict_pair_model, config, test_pair_loader, test_pair_eval,
+            predict_pair_polarity_model, config, test_pair_loader, test_pair_eval,
             test_pair_parameters, mode="pair", polarity=False, initialize=(False, False)
         )
 
@@ -271,7 +271,7 @@ def main():
         test_polarity_loader = data_loader_utils.get_loader([test_polarity_representation], 1)
 
         train_test_utils.pair_stage_model_test(
-            predict_polarity_model, config, test_polarity_loader, test_pair_eval,
+            predict_pair_polarity_model, config, test_polarity_loader, test_pair_eval,
             test_polarity_parameters, mode="polarity", polarity=True, initialize=(True, True)
         )
 
@@ -391,10 +391,10 @@ def main():
 
         # gen pair
         if os.path.exists(train_first_process_data_path):
-            train_pair_representation, train_make_pair_label, train_polarity_representation, train_polarity_label = \
+            train_pair_representation, train_make_pair_label, train_polarity_label = \
                 shared_utils.read_pickle(train_first_process_data_path)
         else:
-            _, train_pair_representation, train_make_pair_label, \
+            _, train_pair_representation, train_make_pair_polarity_label, \
                 train_feature_out, train_bert_feature_out = \
                 train_test_utils.first_stage_model_test(
                     elem_model, config, train_loader, generate_second_res_eval,
@@ -402,27 +402,27 @@ def main():
                     test_type="gene", feature_type=feature_type
                 )
 
-            train_pair_representation, train_make_pair_label = cpc.generate_train_pair_data(
-                train_pair_representation, train_make_pair_label
+            #  Lọc ra những pair nào toàn 0
+            train_pair_representation, train_make_pair_label, train_polarity_label = cpc.generate_train_pair_data(
+                train_pair_representation, train_make_pair_polarity_label[0], train_make_pair_polarity_label[1]
             )
 
-            train_polarity_representation, train_polarity_label = cpc.create_polarity_train_data(
-                config, data_gene.train_data_dict['tuple_pair_col'], train_feature_out,
-                train_bert_feature_out, feature_type=feature_type
-            )
+            # train_polarity_representation, train_polarity_label = cpc.create_polarity_train_data(
+            #     config, data_gene.train_data_dict['tuple_pair_col'], train_feature_out,
+            #     train_bert_feature_out, feature_type=feature_type
+            # )
 
             shared_utils.write_pickle(
-                [train_pair_representation, train_make_pair_label,
-                 train_polarity_representation, train_polarity_label],
+                [train_pair_representation, train_make_pair_label, train_polarity_label],
                 train_first_process_data_path
             )
 
         if os.path.exists(dev_first_process_data_path):
-            dev_candidate_pair_col, dev_pair_representation, dev_make_pair_label = \
+            dev_candidate_pair_col, dev_pair_representation, dev_make_pair_polarity_label = \
                 shared_utils.read_pickle(dev_first_process_data_path)
 
         else:
-            dev_candidate_pair_col, dev_pair_representation, dev_make_pair_label, _, _ = \
+            dev_candidate_pair_col, dev_pair_representation, dev_make_pair_polarity_label, _, _ = \
                 train_test_utils.first_stage_model_test(
                     elem_model, config, dev_loader, generate_second_res_eval,
                     eval_parameters=[data_gene.dev_data_dict['tuple_pair_col']],
@@ -430,16 +430,16 @@ def main():
                 )
 
             shared_utils.write_pickle(
-                [dev_candidate_pair_col, dev_pair_representation, dev_make_pair_label],
+                [dev_candidate_pair_col, dev_pair_representation, dev_make_pair_polarity_label[0]],
                 dev_first_process_data_path
             )
 
         if os.path.exists(test_first_process_data_path):
-            test_candidate_pair_col, test_pair_representation, test_make_pair_label = \
+            test_candidate_pair_col, test_pair_representation, test_make_pair_polarity_label = \
                 shared_utils.read_pickle(test_first_process_data_path)
 
         else:
-            test_candidate_pair_col, test_pair_representation, test_make_pair_label, _, _ = \
+            test_candidate_pair_col, test_pair_representation, test_make_pair_polarity_label, _, _ = \
                 train_test_utils.first_stage_model_test(
                     elem_model, config, test_loader, generate_second_res_eval,
                     eval_parameters=[data_gene.test_data_dict['tuple_pair_col']],
@@ -447,12 +447,12 @@ def main():
                 )
 
             shared_utils.write_pickle(
-                [test_candidate_pair_col, test_pair_representation, test_make_pair_label],
+                [test_candidate_pair_col, test_pair_representation, test_make_pair_polarity_label[0]],
                 test_first_process_data_path
             )
 
         pair_representation = [train_pair_representation, dev_pair_representation, test_pair_representation]
-        make_pair_label = [train_make_pair_label, dev_make_pair_label, test_make_pair_label]
+        make_pair_label = [[train_make_pair_label, train_polarity_label], dev_make_pair_polarity_label, test_make_pair_polarity_label]
 
         dev_pair_eval = PairEvaluation(
             config,
@@ -469,13 +469,14 @@ def main():
             candidate_pair_col=test_candidate_pair_col,
             elem_col=config.val.elem_col,
             ids_to_tags=config.val.norm_id_map,
-            save_model=False
+            save_model=False,
+            test_tokens=data_gene.test_data_dict['bert_token'],
+            test_sent=data_gene.test_data_dict['sent_col']
         )
 
         train_test_utils.pair_stage_model_main(
             config, pair_representation, make_pair_label,
             [dev_pair_eval, test_pair_eval, global_pair_eval],
-            [train_polarity_representation, train_polarity_label],
             model_parameters, optimizer_parameters, model_name, feature_type
         )
 

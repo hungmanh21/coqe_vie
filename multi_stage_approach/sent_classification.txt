@@ -1,3 +1,3 @@
-Precision: 0.0
-Recall: 0.0
-F1-score: 0.0
+Precision: 0.8947368421052632
+Recall: 0.24926686217008798
+F1-score: 0.389908256880734

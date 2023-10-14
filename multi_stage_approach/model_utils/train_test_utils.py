@@ -119,13 +119,13 @@ def pair_stage_model_train(model, optimizer, train_loader, config, epoch):
     model.train()
     epoch_loss, t = 0, 0
     for index, data in tqdm(enumerate(train_loader)):
-        pair_representation, pair_label = data
+        pair_representation, pair_label, polarity_label = data
 
         pair_representation = torch.tensor(pair_representation).float().to(config.device)
-        pair_label = torch.tensor(pair_label).long().to(config.device)
 
         if torch.equal(pair_representation, torch.zeros_like(pair_representation)):
             continue
+        pair_label = (pair_label, polarity_label)
 
         loss = model(pair_representation, pair_label)
 
@@ -163,15 +163,21 @@ def pair_stage_model_test(
 
             pair_representation = torch.tensor(pair_representation).float().to(config.device)
 
-            pair_out = model(pair_representation).view(-1)
+            pair_valid_out, polarity_out = model(pair_representation)
+            pair_valid_out = pair_valid_out.view(-1)
+            polarity_out = polarity_out.view(-1)
 
             if torch.equal(pair_representation, torch.zeros_like(pair_representation)):
-                pair_out = torch.zeros(pair_out.size())
+                pair_valid_out = torch.zeros(pair_valid_out.size())
+                polarity_out = torch.full(polarity_out.size(), 8)
 
             if mode == "pair":
-                res_eval.add_pair_data(pair_out)
+                res_eval.add_pair_data(pair_valid_out)
+            elif mode == "polarity":
+                res_eval.add_polarity_data(polarity_out)
             else:
-                res_eval.add_polarity_data(pair_out)
+                res_eval.add_pair_data(pair_valid_out)
+                res_eval.add_polarity_data(polarity_out)
 
     res_eval.eval_model(measure_file, model, model_path, polarity=polarity, initialize=initialize)
 
@@ -240,7 +246,7 @@ def first_stage_model_main(
     shared_utils.calculate_average_measure(test_comp_eval, global_comp_eval)
 
 
-def pair_stage_model_main(config, pair_representation, make_pair_label, pair_eval, polarity_col,
+def pair_stage_model_main(config, pair_representation, make_pair_label, pair_eval,
                           model_parameters, optimizer_parameters, model_name, feature_type):
     """
 
@@ -258,17 +264,17 @@ def pair_stage_model_main(config, pair_representation, make_pair_label, pair_eva
     train_pair_representation, dev_pair_representation, test_pair_representation = pair_representation
     train_make_pair_label, dev_make_pair_label, test_make_pair_label = make_pair_label
     dev_pair_eval, test_pair_eval, global_pair_eval = pair_eval
-    train_polarity_representation, train_polarity_col = polarity_col
+    # train_polarity_representation, train_polarity_col = polarity_col
 
     print("finish second model data generate")
 
     # get pair loader
-    train_pair_loader = data_loader_utils.get_loader([train_pair_representation, train_make_pair_label], 16)
+    train_pair_loader = data_loader_utils.get_loader([train_pair_representation, train_make_pair_label[0], train_make_pair_label[1]], 16)
     dev_pair_loader = data_loader_utils.get_loader([dev_pair_representation], 1)
     test_pair_loader = data_loader_utils.get_loader([test_pair_representation], 1)
 
     # get polarity data loader.
-    train_polarity_loader = data_loader_utils.get_loader([train_polarity_representation, train_polarity_col], 16)
+    # train_polarity_loader = data_loader_utils.get_loader([train_polarity_representation, train_polarity_col], 16)
 
     pair_weight = torch.tensor([model_parameters['factor'], 1]).float()
 
@@ -276,58 +282,56 @@ def pair_stage_model_main(config, pair_representation, make_pair_label, pair_eva
     pair_feature_dim = feature_dim[feature_type]
 
     # define pair and polarity model.
-    pair_model = copy.deepcopy(
+    pair_polarity_model = copy.deepcopy(
         pipeline_model_utils.LogisticClassifier(config, pair_feature_dim, 2, weight=pair_weight).to(config.device)
     )
-    polarity_model = copy.deepcopy(
-        pipeline_model_utils.LogisticClassifier(config, pair_feature_dim, 4).to(config.device)
-    )
+    # polarity_model = copy.deepcopy(
+    #     pipeline_model_utils.LogisticClassifier(config, pair_feature_dim, 4).to(config.device)
+    # )
 
     if torch.cuda.device_count() > 1:
-        pair_model = nn.DataParallel(pair_model)
-        polarity_model = nn.DataParallel(polarity_model)
-        pair_optimizer = optimizer_utils.Logistic_Optim(pair_model.module, optimizer_parameters)
-        polarity_optimizer = optimizer_utils.Logistic_Optim(polarity_model.module, optimizer_parameters)
+        pair_polarity_model = nn.DataParallel(pair_polarity_model)
+        # polarity_model = nn.DataParallel(polarity_model)
+        pair_polarity_optimizer = optimizer_utils.Logistic_Optim(pair_polarity_model.module, optimizer_parameters)
+        # polarity_optimizer = optimizer_utils.Logistic_Optim(polarity_model.module, optimizer_parameters)
     else:
-        pair_optimizer = optimizer_utils.Logistic_Optim(pair_model, optimizer_parameters)
-        polarity_optimizer = optimizer_utils.Logistic_Optim(polarity_model, optimizer_parameters)
+        pair_polarity_optimizer = optimizer_utils.Logistic_Optim(pair_polarity_model, optimizer_parameters)
+        # polarity_optimizer = optimizer_utils.Logistic_Optim(polarity_model, optimizer_parameters)
 
     dev_pair_parameters = ["./ModelResult/" + model_name + "/dev_pair_result.txt",
                            "./PreTrainModel/" + model_name + "/dev_pair_model"]
 
-    dev_polarity_parameters = ["./ModelResult/" + model_name + "/dev_polarity_result.txt",
-                               "./PreTrainModel/" + model_name + "/dev_polarity_model"]
+    # dev_polarity_parameters = ["./ModelResult/" + model_name + "/dev_polarity_result.txt",
+    #                            "./PreTrainModel/" + model_name + "/dev_polarity_model"]
 
     for epoch in range(50):
-        pair_stage_model_train(pair_model, pair_optimizer, train_pair_loader, config, epoch)
-        pair_stage_model_test(
-            pair_model, config, dev_pair_loader, dev_pair_eval,
-            dev_pair_parameters, mode="pair", polarity=False, initialize=(False, True)
-        )
+        pair_stage_model_train(pair_polarity_model, pair_polarity_optimizer, train_pair_loader, config, epoch)
+        pair_stage_model_test(pair_polarity_model, config, dev_pair_loader, dev_pair_eval, dev_pair_parameters,
+                              mode="both", polarity=True, initialize=(True, True))
 
     # get optimize pair model.
-    predict_pair_model = torch.load(dev_pair_parameters[1])
-    test_pair_parameters = ["./ModelResult/" + model_name + "/test_pair_result.txt", None]
-    pair_stage_model_test(
-        predict_pair_model, config, dev_pair_loader, dev_pair_eval,
-        test_pair_parameters, mode="pair", polarity=False, initialize=(False, False)
-    )
-
-    # get representation by is_pair label filter.
-    dev_polarity_representation = cpc.get_after_pair_representation(dev_pair_eval.y_hat, dev_pair_representation)
-    dev_polarity_loader = data_loader_utils.get_loader([dev_polarity_representation], 1)
-    shared_utils.clear_optimize_measure(dev_pair_eval)
-
-    for epoch in range(50):
-        pair_stage_model_train(polarity_model, polarity_optimizer, train_polarity_loader, config, epoch)
-        pair_stage_model_test(
-            polarity_model, config, dev_polarity_loader, dev_pair_eval,
-            dev_polarity_parameters, mode="polarity", polarity=True, initialize=(True, False)
-        )
+    # predict_pair_model = torch.load(dev_pair_parameters[1])
+    # test_pair_parameters = ["./ModelResult/" + model_name + "/test_pair_result.txt", None]
+    # pair_stage_model_test(
+    #     predict_pair_model, config, dev_pair_loader, dev_pair_eval,
+    #     test_pair_parameters, mode="pair", polarity=False, initialize=(False, False)
+    # )
+    #
+    # # get representation by is_pair label filter.
+    # dev_polarity_representation = cpc.get_after_pair_representation(dev_pair_eval.y_hat, dev_pair_representation)
+    # dev_polarity_loader = data_loader_utils.get_loader([dev_polarity_representation], 1)
+    # shared_utils.clear_optimize_measure(dev_pair_eval)
+    #
+    # for epoch in range(50):
+    #     pair_stage_model_train(polarity_model, polarity_optimizer, train_polarity_loader, config, epoch)
+    #     pair_stage_model_test(
+    #         polarity_model, config, dev_polarity_loader, dev_pair_eval,
+    #         dev_polarity_parameters, mode="polarity", polarity=True, initialize=(True, False)
+    #     )
 
     print("==================test================")
     predict_pair_model = torch.load(dev_pair_parameters[1])
-    predict_polarity_model = torch.load(dev_polarity_parameters[1])
+    # predict_polarity_model = torch.load(dev_polarity_parameters[1])
 
     test_pair_parameters = ["./ModelResult/" + model_name + "/test_pair_result.txt", None]
     test_polarity_parameters = ["./ModelResult/" + model_name + "/test_pair_result.txt", None]
@@ -349,7 +353,7 @@ def pair_stage_model_main(config, pair_representation, make_pair_label, pair_eva
     test_polarity_loader = data_loader_utils.get_loader([test_polarity_representation], 1)
 
     pair_stage_model_test(
-        predict_polarity_model, config, test_polarity_loader, test_pair_eval,
+        predict_pair_model, config, test_polarity_loader, test_pair_eval,
         test_polarity_parameters, mode="polarity", polarity=True, initialize=(True, True)
     )
 

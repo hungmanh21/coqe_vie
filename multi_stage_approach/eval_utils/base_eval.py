@@ -976,15 +976,17 @@ class ElementEvaluation(BaseEvaluation):
 
             candidate_pair_col.append(cur_candidate_pair_col)
 
+        # tạo ra biểu diễn bằng bộ 4 element concat lại với nhau
         pair_representation = self.create_pair_representation(
             candidate_pair_col, feature_embed, bert_feature_embed, feature_type=feature_type
         )
 
-        make_pair_label = self.create_pair_label(candidate_pair_col, gold_pair_label)
+        # TODO : sửa ở đây để có thêm nhãn label (preference)
+        valid_polarity_label = self.create_pair_label(candidate_pair_col, gold_pair_label)
 
         self.elem_hat, self.result_hat = [], []
 
-        return candidate_pair_col, pair_representation, make_pair_label, feature_embed, bert_feature_embed
+        return candidate_pair_col, pair_representation, valid_polarity_label, feature_embed, bert_feature_embed
 
     def create_pair_representation(self, candidate_col, feature_out, bert_feature_out, feature_type=0):
         """
@@ -1006,7 +1008,6 @@ class ElementEvaluation(BaseEvaluation):
                 each_pair_representation = []
 
                 # add polarity maybe need change###########
-
                 # skip polarity
                 for elem_index in range(4):
                     s, e = candidate_col[index][pair_index][elem_index]
@@ -1080,22 +1081,29 @@ class ElementEvaluation(BaseEvaluation):
         :param truth_pair_label: shape is [n, tuple_pair_num, tuple_pair]
         :return:
         """
-        pair_label_col, null_pair = [], [(-1, -1)] * 5
+        pair_label_col, polarity_label_col, null_pair = [], [], [(-1, -1)] * 5
         for i in range(len(candidate_col)):
             # cartesian product pair num
             is_pair_label = []
+            polarity_label = []
             for j in range(len(candidate_col[i])):
                 # truth predicate pair num
                 isExist = False
+
+                # 8 : denote label Other (0 to 7 is our label)
+                current_polarity = 8
                 for k in range(len(truth_pair_label[i])):
                     if self.is_equal_tuple_pair(candidate_col[i][j], truth_pair_label[i][k], null_pair):
                         isExist = True
+                        current_polarity = truth_pair_label[i][k][-1][0] + 1
 
                 is_pair_label.append(1 if isExist else 0)
+                polarity_label.append(current_polarity)
 
             pair_label_col.append(is_pair_label)
+            polarity_label_col.append(polarity_label)
 
-        return pair_label_col
+        return (pair_label_col, polarity_label_col)
 
 
 class PairEvaluation(BaseEvaluation):
