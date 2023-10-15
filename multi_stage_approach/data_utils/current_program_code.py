@@ -20,16 +20,18 @@ def read_file(file_path):
     final_label_col = []
     for paragraph in paragraphs:
         lines = paragraph.strip().split('\n')
-        sentence = lines[0].strip()
+        if len(lines[0].strip().split("\t")) == 1:
+            continue
+        sentence = lines[0].strip().split("\t")[1]
         label_col = []
-        if(len(lines) == 1):
+        if len(lines) == 1:
             label = 0
             dict_empty = {"subject": [], "object": [], "aspect": [], "predicate": [], "label": []}
             label_col.append(dict_empty)
         else:
             label = 1
             for i in range(len(lines)):
-                if(i != 0):
+                if i != 0:
                     dictionary = json.loads(lines[i])
                     label_col.append(dictionary)
 
@@ -38,6 +40,7 @@ def read_file(file_path):
         final_label_col.append(label_col)
 
     return sent_col, sent_label_col, final_label_col
+
 
 def extract_indices(label_quin):
     global_elem_col = {}
@@ -77,6 +80,7 @@ def extract_indices(label_quin):
                 each_tuple_pair = [(-1, -1)] * 5
     return global_elem_col, each_tuple_pair
 
+
 def idx_presentation(label_col):
     final_label_col = []
     final_tuple_pair = []
@@ -113,6 +117,7 @@ def read_standard_file(path):
     sent_col, sent_label_col, label_col = read_file(file_path=path)
     label_col, tuple_pair_col = idx_presentation(label_col)
     return sent_col, sent_label_col, label_col, tuple_pair_col
+
 
 def mapping_segmented_col(sent_col, label_col, tuple_pair_col):
     new_sent_col = []
@@ -202,7 +207,6 @@ def mapping_segmented_col(sent_col, label_col, tuple_pair_col):
         # for file dev.txt
         new_str = new_str.replace('mô - đun', 'mô-đun')
         new_str = new_str.replace('Li - on', 'Li-on')
-        new_str = new_str.replace('372ppi trên Z Fold 2 .', '372ppi trên Z Fold 2.')
 
         # for file test.txt
         new_str = new_str.replace('1,5 mm', '1,5mm')
@@ -279,8 +283,6 @@ def mapping_segmented_col(sent_col, label_col, tuple_pair_col):
                 mapped_sublist_2d.append(mapped_sublist)
             new_tuple_pair_col.append(mapped_sublist_2d)
     return segmented_sent_col, new_label_col, new_tuple_pair_col, new_sent_col
-
-
 
 
 ########################################################################################################################
@@ -480,6 +482,7 @@ def token_char_convert_to_token_bert(bert_token_col, token_char, mapping_col):
 
     return bert_token_char
 
+
 ########################################################################################################################
 # Multi-Sequence Label Generate Code
 ########################################################################################################################
@@ -563,6 +566,7 @@ def elem_dict_convert_to_multi_sequence_label(token_col, label_col, special_symb
         elem_pair_col.append(sent_multi_col)
 
     return elem_pair_col, result_sequence_label_col, polarity_col
+
 
 ########################################################################################################################
 # Count the number of element or pair Code
@@ -761,7 +765,7 @@ def create_predicate_info(predicate_vocab, token_col):
             for j in range(len(token_col[i])):
                 if "".join(token_col[i][j: j + cur_token_length]) == token:
                     sequence_predicate_index_col.append([t for t in range(j, j + cur_token_length)])
-        sequence_predicate_index_col = sorted(sequence_predicate_index_col, key=lambda x:x[0])
+        sequence_predicate_index_col = sorted(sequence_predicate_index_col, key=lambda x: x[0])
         predicate_index_col.append(sequence_predicate_index_col)
 
     return predicate_index_col
@@ -878,8 +882,6 @@ def create_polarity_train_data(config, tuple_pair_col, feature_out, bert_feature
                                 torch.mean(bert_feature_out[index][s: e], dim=0).cpu().view(-1, encode_hidden_size)
                             )
 
-
-
             if torch.cuda.is_available():
                 cur_representation = torch.cat(each_pair_representation, dim=-1).view(-1).cpu().numpy().tolist()
             else:
@@ -978,8 +980,6 @@ def change_sequence_label_by_tuple_pair(sequence_multi_label, tuple_pair):
     return sequence_multi_label
 
 
-
-
 def create_polarity_label(tuple_pair_col):
     """
     :param tuple_pair_col:
@@ -994,7 +994,6 @@ def create_polarity_label(tuple_pair_col):
         polarity_col.append(sequence_polarity)
 
     return polarity_col
-
 
 
 def convert_eng_tuple_pair_by_mapping(tuple_pair_col, mapping_col):
