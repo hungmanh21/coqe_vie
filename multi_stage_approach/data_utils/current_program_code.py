@@ -1,3 +1,5 @@
+import ast
+
 from data_utils import shared_utils
 import numpy as np
 import copy
@@ -32,7 +34,7 @@ def read_file(file_path):
             label = 1
             for i in range(len(lines)):
                 if i != 0:
-                    dictionary = json.loads(lines[i])
+                    dictionary = ast.literal_eval(lines[i])
                     label_col.append(dictionary)
 
         sent_col.append(sentence)
