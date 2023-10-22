@@ -19,10 +19,10 @@ class Baseline(nn.Module):
 
         self.encoder = Layer.BERTCell(config.path.bert_model_path)  # define encoder layer
 
-        self.encoder_2 = Layer.LSTMCell(
-            self.encoder.hidden_size, config.hidden_size, config.num_layers,
-            config.device, batch_first=True, bidirectional=True
-        )
+        # self.encoder_2 = Layer.LSTMCell(
+        #     self.encoder.hidden_size, config.hidden_size, config.num_layers,
+        #     config.device, batch_first=True, bidirectional=True
+        # )
 
         self.embedding_dropout = nn.Dropout(model_parameters['embed_dropout'])  # define dropout layer
         """During training, randomly zeroes some of the elements of the input tensor with probability p using samples 
@@ -48,8 +48,8 @@ class Baseline(nn.Module):
             self.encoder.hidden_size = 768
             config.val.norm_id_map = {'O': 0, 'B': 1, 'M': 2, 'E': 3, 'S': 4}
             """
-            # self.W.append(copy.deepcopy(nn.Linear(self.encoder.hidden_size, len(config.val.norm_id_map))))
-            self.W.append(copy.deepcopy(nn.Linear(config.hidden_size*2, len(config.val.norm_id_map))))
+            self.W.append(copy.deepcopy(nn.Linear(self.encoder.hidden_size, len(config.val.norm_id_map))))
+            # self.W.append(copy.deepcopy(nn.Linear(config.hidden_size*2, len(config.val.norm_id_map))))
 
         # define multi-crf decode the sequence.
         # có 4 CRF đại diện cho 4 phần tử để decode
@@ -74,9 +74,9 @@ class Baseline(nn.Module):
 
         batch_size, sequence_length, _ = token_embedding.size()
 
-        final_token_embedding, _ = self.encoder_2(token_embedding)
+        # final_token_embedding, _ = self.encoder_2(token_embedding)
 
-        final_embedding = self.embedding_dropout(final_token_embedding)
+        final_embedding = self.embedding_dropout(token_embedding)
         # class_embedding = self.embedding_dropout(pooled_output)
 
         # linear mapping.
@@ -227,10 +227,18 @@ class LogisticClassifier(nn.Module):
         self.config = config
         self.class_num = class_num
 
-        self.feature_dim = feature_dim
-        self.fc = nn.Linear(4 * (5 + 768), 2)
+        self.usingPredicate = True
 
-        self.fc_2 = nn.Linear((5 + 768), 9)
+        self.feature_dim = feature_dim
+        self.fc = nn.Linear(4 * (5 + 768), (5 + 768))
+        self.fc_2 = nn.Linear((5 + 768), 2)
+
+        if self.usingPredicate:
+            self.fc_3 = nn.Linear((5 + 768), 256)
+            self.fc_4 = nn.Linear(256, 9)
+        else:
+            self.fc_3 = nn.Linear(4 * (5 + 768), (5 + 768))
+            self.fc_4 = nn.Linear((5 + 768), 9)
         self.weight = weight
 
         self.dropout = nn.Dropout(dropout)
@@ -244,25 +252,57 @@ class LogisticClassifier(nn.Module):
             valid_indices = ~torch.isnan(pair_representation)
             valid_indices = torch.nonzero(valid_indices.all(dim=1)).squeeze().cpu().numpy()
             pair_representation = pair_representation[valid_indices]
-            polarity_representation = pair_representation[:, 2319:3092]
+
+            if self.usingPredicate:
+                polarity_representation = pair_representation[:, 2319:3092]
+            else:
+                polarity_representation = pair_representation
         else:
-            polarity_representation = pair_representation[:, :, :, 2319:3092]
+            if self.usingPredicate:
+                polarity_representation = pair_representation[:, :, :, 2319:3092]
+            else:
+                polarity_representation = pair_representation
         # valid
-        predict_label = self.fc(pair_representation.view(-1, 4 * (5 + 768)))
+        # predict_label = self.fc(pair_representation.view(-1, 4 * (5 + 768)))
+        embed_valid = self.fc(pair_representation.view(-1, 4 * (5 + 768)))
+        embed_valid = self.dropout(embed_valid)
+        predict_label = self.fc_2(embed_valid)
 
         # label
-        predict_label_2 = self.fc_2(polarity_representation.view(-1, (5 + 768)))
+        if self.usingPredicate:
+            embed_label = self.fc_3(polarity_representation.view(-1, (5 + 768)))
+        else:
+            embed_label = self.fc_3(polarity_representation.view(-1, 4 * (5 + 768)))
+        embed_label = self.dropout(embed_label)
+        predict_label_2 = self.fc_4(embed_label)
 
         # weight = torch.tensor([1, 1, 1, 1]).float().to(self.config.device)
         # calculate loss.
         if pair_label is not None:
             valid_label = valid_label[valid_indices]
             polarity_label = polarity_label[valid_indices]
+
+            # predict_valid_final = torch.max(F.softmax(predict_label, dim=-1), dim=-1)[-1]
+            # predict_label_final = torch.max(F.softmax(predict_label_2, dim=-1), dim=-1)[-1]
+            #
+            # indices = (predict_valid_final == 1) & (predict_label_final == 8)
+            # indices = indices.nonzero(as_tuple=True)
+            #
+            # # indices[0] chứa các chỉ mục thỏa mãn điều kiện
+            # result_indices = indices[0]
+            #
+            # if len(result_indices) > 0:
+            #     criterion_3 = nn.CrossEntropyLoss()
+            #     more_loss = criterion_3(predict_label_2[result_indices], polarity_label.view(-1)[result_indices])
+            # else:
+            #     more_loss = 0
             # if self.weight is not None:
             #     self.weight = self.weight.to(self.config.device)
             #     criterion = nn.CrossEntropyLoss(weight=self.weight)
             # else:
-            criterion = nn.CrossEntropyLoss()
-            return criterion(predict_label, valid_label.view(-1)) + criterion(predict_label_2, polarity_label.view(-1))
+            self.weight = self.weight.to(self.config.device)
+            criterion_1 = nn.CrossEntropyLoss(weight=self.weight)
+            criterion_2 = nn.CrossEntropyLoss()
+            return criterion_1(predict_label, valid_label.view(-1)) + criterion_2(predict_label_2,polarity_label.view(-1))
         else:
             return torch.max(F.softmax(predict_label, dim=-1), dim=-1)[-1], torch.max(F.softmax(predict_label_2, dim=-1), dim=-1)[-1]

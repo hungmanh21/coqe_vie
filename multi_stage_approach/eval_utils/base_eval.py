@@ -1,13 +1,20 @@
 import csv
 import copy
 import json
+from collections import Counter
 
 import torch
 import numpy as np
 
-from sklearn.metrics import precision_score, recall_score, f1_score
-
 from data_utils import shared_utils
+
+import seaborn as sn
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import classification_report
 
 
 class BaseEvaluation(object):
@@ -1144,17 +1151,84 @@ class PairEvaluation(BaseEvaluation):
         predict_tuple_pair_col = self.get_predict_truth_tuple_pair(self.candidate_pair_col)
 
         if polarity and self.test_tokens and self.test_sent:
-            with open("output_quintuples.txt", 'w', encoding='utf-8') as file:
-                for i in range(len(self.gold_pair_col)):
-                    sentence = ', '.join([f"'{x}'" for x in self.test_sent[i]])
-                    sent = ', '.join([f"'{x}'" for x in self.test_tokens[i]])
-                    sent_2 = ', '.join([f"'{x}'" for x in predict_tuple_pair_col[i]])
-                    sent_3 = ', '.join([f"'{x}'" for x in self.gold_pair_col[i]])
-                    file.write(f"[{sentence}]\n")
-                    file.write(f"[{sent}]\n")
-                    file.write(f"[{sent_2}]\n")
-                    file.write(f"[{sent_3}]\n")
-                    file.write("\n")
+            golden_polarity = []
+            pred_polarity = []
+            for i in range(len(predict_tuple_pair_col)):
+                for j in range(len(predict_tuple_pair_col[i])):
+                    cur_pol = 7
+                    for golden_index in range(len(self.gold_pair_col[i])):
+                        if self.gold_pair_col[i][golden_index] == predict_tuple_pair_col[i][j]:
+                            cur_pol = self.gold_pair_col[i][golden_index][-1][0]
+                            break
+                    gold_pol = "Other"
+                    if cur_pol == -1:
+                        gold_pol = "DIF"
+                    elif cur_pol == 0:
+                        gold_pol = "EQL"
+                    elif cur_pol == 1:
+                        gold_pol = "SUP+"
+                    elif cur_pol == 2:
+                        gold_pol = "SUP-"
+                    elif cur_pol == 3:
+                        gold_pol = "SUP"
+                    elif cur_pol == 4:
+                        gold_pol = "COM+"
+                    elif cur_pol == 5:
+                        gold_pol = "COM-"
+                    elif cur_pol == 6:
+                        gold_pol = "COM"
+                    golden_polarity.append(gold_pol)
+
+            for i in range(len(predict_tuple_pair_col)):
+                for j in range(len(predict_tuple_pair_col[i])):
+                    cur_pol = predict_tuple_pair_col[i][j][-1][0]
+                    pred_pol = "Other"
+                    if cur_pol == -1:
+                        pred_pol = "DIF"
+                    elif cur_pol == 0:
+                        pred_pol = "EQL"
+                    elif cur_pol == 1:
+                        pred_pol = "SUP+"
+                    elif cur_pol == 2:
+                        pred_pol = "SUP-"
+                    elif cur_pol == 3:
+                        pred_pol = "SUP"
+                    elif cur_pol == 4:
+                        pred_pol = "COM+"
+                    elif cur_pol == 5:
+                        pred_pol = "COM-"
+                    elif cur_pol == 6:
+                        pred_pol = "COM"
+                    pred_polarity.append(pred_pol)
+
+            print("--------- CHECKk --------------")
+            print(Counter(golden_polarity))
+            print(Counter(pred_polarity))
+            print("--------- CHECKk --------------")
+            # classes = ["COM", "COM+", "COM-", "DIF", "EQL", "Other", "SUP+"]
+            # labels = ["DIF", "EQL", "SUP+", "SUP-", "SUP", "COM+", "COM-", "COM", "Other"]
+            # cm = confusion_matrix(golden_polarity, pred_polarity)
+            # print(cm)
+            # df_cm = pd.DataFrame(cm, classes, classes)
+            # ax = sn.heatmap(df_cm, annot=True, annot_kws={"size": 16}, square=True, cbar=False, fmt='g')
+            # plt.xlabel("Predicted")
+            # plt.ylabel("Actual")
+            # plt.title("Hidden layer + Using 4 element")
+            # ax.invert_yaxis()  # optional
+            # plt.savefig('confusion_matrix_polarity.png')
+            # plt.show()
+            #
+            # with open("output_quintuples.txt", 'w', encoding='utf-8') as file:
+            #     for i in range(len(self.gold_pair_col)):
+            #         sentence = ', '.join([f"'{x}'" for x in self.test_sent[i]])
+            #         sent = ', '.join([f"'{x}'" for x in self.test_tokens[i]])
+            #         sent_2 = ', '.join([f"'{x}'" for x in predict_tuple_pair_col[i]])
+            #         sent_3 = ', '.join([f"'{x}'" for x in self.gold_pair_col[i]])
+            #         file.write(f"[{sentence}]\n")
+            #         file.write(f"[{sent}]\n")
+            #         file.write(f"[{sent_2}]\n")
+            #         file.write(f"[{sent_3}]\n")
+            #         file.write("\n")
 
         assert len(self.gold_pair_col) == len(predict_tuple_pair_col), "data length error!"
 
@@ -1198,7 +1272,6 @@ class PairEvaluation(BaseEvaluation):
         #     f.write(tuple_str)
 
         print(gold_num, predict_num)
-
 
         # calculate f-score.
         # "P": precision, "R": recall, "F": f_score}
